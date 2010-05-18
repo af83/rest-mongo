@@ -21,7 +21,12 @@ var db = new mongo.Db('test-rest-mongo', mongo_server);
 
 var todo_once_db_opened = [];
 var client = null;
-db.open(function(client_) {
+db.open(function(err, client_) {
+  if (err) {
+    debug('Error while opening connection with DB:')
+    debug(err.stack);
+    return;
+  }
   client = client_;
   todo_once_db_opened.forEach(function(callback) {
     callback();
