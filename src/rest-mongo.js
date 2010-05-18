@@ -8,9 +8,10 @@ var sys = require('sys');
 
 var callbacks = require('nodetk/orchestration/callbacks');
 var debug = require('nodetk/logging').debug;
+var utils = require('nodetk/utils');
 
 var mongo = require("mongodb/db");
-process.mixin(mongo, require('mongodb/connection'));
+utils.extend(mongo, require('mongodb/connection'));
 var ObjectID = require('mongodb/bson/bson').ObjectID;
 
 // TODO: put this stuff in the R factory
@@ -76,7 +77,7 @@ var delegate = function(obj, args_sups, delegation_table) {
         fallback = callback; callback = args;
         args = {};
       }
-      var new_args = process.mixin({}, args_sups, args);
+      var new_args = utils.extend({}, args_sups, args);
       return method(new_args, callback, fallback);
     };
   }(delegation_table[method_name]));
@@ -492,7 +493,7 @@ var setRestClassProto = function(RestClass, rest_classes) {
        * The [list of] references are changed for references to real objects
        * */
       link_references(data, RestClass.schema.id, rest_classes);
-      return process.mixin(this, data);
+      return utils.extend(this, data);
     },
     refresh: function(callback, fallback){
       /* Reload the object with values from DB.
@@ -567,7 +568,7 @@ exports.getRFactory = function(schema) {
       };
     }
 
-    return process.mixin({
+    return utils.extend({
       clear_caches: function() {
         debug("Clear the caches");
         each(rest_classes, function(name, RestClass){
