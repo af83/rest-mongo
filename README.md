@@ -27,12 +27,17 @@ var schema = {
 };
 </code></pre>
 
+The schema describes a document. It can have references or list of references to
+other documents.
+
 ### Get a unit of work (we call it 'R'):
 <pre><code>
 var rest_mongo = require("rest-mongo");
 var RFactory = rest_mongo.getRFactory(schema, "db_name");
 var R = RFactory();
 </code></pre>
+
+Get a new R every time you need to get a new context to work in (at every client request for example).
 
 ### Create and save an object into the DB
 <pre><code>
@@ -78,12 +83,14 @@ harry.save(function() {
 </code></pre>
 
 ### Update more than one field in once:
+<pre><code>
 R.Person.update({
   ids: [lilly.id(), harry.id()], 
   data: {firstname: 'anonymous'}
 }, function() {
   sys.puts("Voldemort cannot find them anymore...");
 });
+</code></pre>
 
 
 ## Installation
