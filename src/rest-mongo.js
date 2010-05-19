@@ -14,25 +14,26 @@ var mongo = require("mongodb/db");
 utils.extend(mongo, require('mongodb/connection'));
 var ObjectID = require('mongodb/bson/bson').ObjectID;
 
-// TODO: put this stuff in the R factory
-var mongo_server = new mongo.Server("localhost", 27017, {auto_reconnect: true}, {});
-var db = new mongo.Db('test-rest-mongo', mongo_server);
+var mongo_server;
+var db;
 
 
 var todo_once_db_opened = [];
 var client = null;
-db.open(function(err, client_) {
-  if (err) {
-    debug('Error while opening connection with DB:')
-    debug(err.stack);
-    return;
-  }
-  client = client_;
-  todo_once_db_opened.forEach(function(callback) {
-    callback();
+var init_connection_db = function() {
+  db.open(function(err, client_) {
+    if (err) {
+      debug('Error while opening connection with DB:')
+      debug(err.stack);
+      return;
+    }
+    client = client_;
+    todo_once_db_opened.forEach(function(callback) {
+      callback();
+    });
+    delete waiter_for_db_opened;
   });
-  delete waiter_for_db_opened;
-});
+}
 
 
 var get_collection = function(name, callback, fallback) {
@@ -522,7 +523,7 @@ var setRestClassProto = function(RestClass, rest_classes) {
   }
 };
 
-exports.getRFactory = function(schema) {
+exports.getRFactory = function(schema, db_name, db_host, db_port) {
   /* Returns a R factory.
    * This factory return a R object at every call. Each R as its own "session",
    * meaning that two subsequent calls of R.Toto.get(2) will return the same object.
@@ -533,7 +534,21 @@ exports.getRFactory = function(schema) {
    *  var RFactory = getRFactory();
    *
    * and then for every request (or unit of work): var R = RFactory();
+   *
+   * Arguments:
+   *  - schema: schema describing the nature of your data
+   *  - db_name: name of the DB you want to connect to
+   *  - db_host: optional, default to "localhost"
+   *  - db_port: optional, default to 27017
    */
+  db_host = db_host || "localhost";
+  db_port = db_port || 27017;
+  if (!schema) throw('You must specify a schema');
+  if (!db_name) throw('You must specify a DB name!'); 
+  mongo_server = new mongo.Server(db_host, db_port, {auto_reconnect: true}, {});
+  db = new mongo.Db(db_name, mongo_server);
+  init_connection_db();
+
   build_ref_lists(schema);
   return function() {
     var rest_classes = {};

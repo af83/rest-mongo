@@ -22,13 +22,22 @@ var schema = {
 };
 
 
-var R = require("../rest-mongo").getRFactory(schema)();
+var R = require("../rest-mongo").getRFactory(schema, 'test-rest-mongo')();
 
 exports.setup = function(callback) {
   R.Person.clear_all(callback);
 };
 
 exports.tests = [
+
+['Create facotry with bad args', 2, function() {
+  assert.throws(function() {
+    require("../rest-mongo").getRFactory();
+  });
+  assert.throws(function() {
+    require("../rest-mongo").getRFactory(schema);
+  });
+}],
 
 ['Create obj', 2, function() {
   // Create an object, check it has an id
