@@ -1,6 +1,7 @@
 var sys = require("sys");
 var assert = require("nodetk/testing/custom_assert");
-var debug = require('nodetk/logging').debug
+var debug = require('nodetk/logging').debug;
+var rest_mongo = require("../rest-mongo");
 
 
 var schema = {
@@ -22,7 +23,7 @@ var schema = {
 };
 
 
-var R = require("../rest-mongo").getRFactory(schema, 'test-rest-mongo')();
+var R = rest_mongo.getRFactory(schema, 'test-rest-mongo')();
 
 exports.setup = function(callback) {
   R.Person.clear_all(callback);
@@ -32,10 +33,10 @@ exports.tests = [
 
 ['Create factory with bad args', 2, function() {
   assert.throws(function() {
-    require("../rest-mongo").getRFactory();
+    rest_mongo.getRFactory();
   });
   assert.throws(function() {
-    require("../rest-mongo").getRFactory(schema);
+    rest_mongo.getRFactory(schema);
   });
 }],
 
