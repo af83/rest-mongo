@@ -330,39 +330,39 @@ var insert = function(args, callback, fallback) {
    * Arguments:
    *  - args:
    *    - obj: the object to insert in DB.
+   *    - RestClass: the RestClass of the obj
+   *    - session: the session in which we are working
    *  - callback(obj): to be called once the object has been successfully inserted.
    *  - fallback(err): to be called in case of error.
    */
   var obj = args.obj;
-
   var RestClass = args.RestClass;
   var cache = args.session.cache;
   var awaiting_get_callbacks = args.session.awaiting_get_callbacks;
 
   get_collection(RestClass.schema.id, function(collection) {
-    collection.insert(obj, function(err, objs) {
+    collection.insert(obj.unlink(), function(err, objs) {
       if(err != null) {
         debug("\nError when inserting:");
         debug(err.stack);
         return fallback && fallback(err);
       }
       cache[objs[0]._id] = obj._update(objs[0]);
-      callback && callback(objs[0]);
+      callback && callback(obj);
     });
   });
 };
 
 
-var clear_cache = function(args, callback) {
+var clear_cache = function(args) {
   /* Clear the session cache.
    *
    * Arguments:
-   *  - args: {}
-   *  - callback: if given, will be called right after the cache has been cleared.
+   *  - args:
+   *    - session
    */
   args.session.cache = {};
   args.session.awaiting_get_callbacks = {};
-  callback && callback;
 };
 
 
@@ -370,10 +370,13 @@ var clear_all = function(args, callback, fallback) {
   /* Delete ALL objects of RestClass from DB.
    *
    * Arguments:
-   *  - args: {}
+   *  - args:
+   *    - RestClass
+   *    - session
    *  - callback(): to be called once the objects have been removed from DB.
    *  - fallback: to be called in case of error.
    */
+  clear_cache(args);
   var RestClass = args.RestClass;
   get_collection(RestClass.schema.id, function(collection) {
     collection.remove({}, function(err) {
@@ -406,10 +409,10 @@ var unlink_references = function(obj) {
   for(var key in obj.Class.schema.properties) {
     if(key in refs.dict_ref_lists) 
       res[key] = obj[key] && obj[key].map(function(elmt) {
-        return {_id: elmt.id_};
+        return {_id: elmt._id};
       }) || [];
     else if(key in refs.dict_refs)
-      res[key] = obj[key] && {_id: obj[key].id_} || null;
+      res[key] = obj[key] && {_id: obj[key]._id} || null;
     else res[key] = obj[key];
   }
   return res;
@@ -443,9 +446,9 @@ var build_ref_lists = function(schema) {
   for(var class_name in schema){
     var dict_ref_lists = {};
     var dict_refs = {};
+    var class_schema = schema[class_name].schema;
+    var properties = class_schema.properties;
     for(var key in properties){
-      var class_schema = schema[class_name].schema,
-          properties = class_schema.properties;
       var val = properties[key];
       if(val.type == 'array' && val.items['$ref']){
         dict_ref_lists[key] = val.items['$ref'];
@@ -459,6 +462,7 @@ var build_ref_lists = function(schema) {
       dict_refs: dict_refs,
     };
   }
+  debug('REFS_LISTS:', REFS_LISTS);
 };
 
 
@@ -545,7 +549,7 @@ exports.getRFactory = function(schema) {
       var RestClass = function(data, partially_loaded) {
         data = data || {};
         debug("Create a new object of rest class " + class_name +
-                    " with id " + (data.id && data.id.toHexString()));
+                    " with data ", data);
         data._id && (session.cache[data._id] = this);
         this._update(data);
         if(partially_loaded) this._pl = true;
@@ -568,8 +572,9 @@ exports.getRFactory = function(schema) {
       RestClass.resource = schema[class_name].resource;
 
       RestClass.qau = function(data){
-          return session.cache[data.id] && session.cache[data.id]._update(data)
-                 || new RestClass(data, 1);
+        debug("qau on " + RestClass.schema.id + " with data: ", data);
+        return session.cache[data._id] && session.cache[data._id]._update(data)
+               || new RestClass(data, 1);
       };
     }
 
