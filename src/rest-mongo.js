@@ -14,30 +14,23 @@ var mongo = require("mongodb/db");
 utils.extend(mongo, require('mongodb/connection'));
 var ObjectID = require('mongodb/bson/bson').ObjectID;
 
-var mongo_server;
-var db;
 
+var init_connection_db = function(db) {
+  /* Open connection with DB + returns a get_collection() fct.
+   */
+  var todo_once_db_opened = [];
+  var client = null;
 
-var todo_once_db_opened = [];
-var client = null;
-var init_connection_db = function() {
-  db.open(function(err, client_) {
-    if (err) {
-      debug('Error while opening connection with DB:')
-      debug(err.stack);
-      return;
-    }
-    client = client_;
-    todo_once_db_opened.forEach(function(callback) {
-      callback();
-    });
-    delete waiter_for_db_opened;
-  });
-}
-
-
-var get_collection = function(name, callback, fallback) {
-  var todo = function() {
+  var get_collection = function(args, callback, fallback) {
+    /* Returns collection corresponding to RestClass given in args.
+     *
+     * Arguments:
+     *  - args:
+     *    - RestClass
+     *  - callback
+     *  - fallback
+     */
+    var name = args.RestClass.schema.id;
     client.collection(name, function(err, collection) {
       if(err == null) callback(collection);
       else {
@@ -47,9 +40,25 @@ var get_collection = function(name, callback, fallback) {
       }
     });
   };
-  if(client != null) todo();
-  else todo_once_db_opened.push(todo);
-};
+
+  db.open(function(err, client_) {
+    if (err) {
+      debug('Error while opening connection with DB:')
+      debug(err.stack);
+      return;
+    }
+    client = client_;
+    todo_once_db_opened.forEach(function(args) {
+      get_collection.apply(this, args);
+    });
+    delete todo_once_db_opened;
+  });
+
+  return function() {
+    if(client != null) get_collection.apply(this, arguments);
+    else todo_once_db_opened.push(arguments);
+  };
+}
 
 
 var isFunction = function(fct) {
@@ -124,7 +133,7 @@ var index = function(args, callback, fallback) {
   var awaiting_get_callbacks = args.session.awaiting_get_callbacks;
 
   var key = JSON.stringify(query);
-  get_collection(RestClass.schema.id, function(collection) {
+  RestClass.get_collection(function(collection) {
     collection.find(query, function(err, cursor) {
       if(err != null) {
         debug("\nError while index:");
@@ -212,7 +221,7 @@ var get = function(args, callback, fallback) {
   debug('to get: ' + to_get.map(function(id){return id.toHexString()}));
   debug('to wait for: ' + to_wait_for.map(function(id){return id.toHexString()}));
 
-  to_get.length && get_collection(RestClass.schema.id, function(collection) {
+  to_get.length && RestClass.get_collection(function(collection) {
     collection.find({_id: {'$in': to_get}}, function(err, cursor) {
       if(err != null) {
         debug("Error on RestClass.get: " + err.stack);
@@ -272,7 +281,7 @@ var update = function(args, callback, fallback) {
   if(!isArray(ids)) ids = [ids];
   debug("Update objects of rest class " + RestClass.schema.id +
            " having ids " + ids.map(function(id){return id.toHexString()}));
-  get_collection(RestClass.schema.id, function(collection) {
+  RestClass.get_collection(function(collection) {
     var options = {upsert: false, safe: Boolean(callback), multi: true};
     collection.update({_id: {'$in': ids}}, 
                       {'$set': data},
@@ -312,7 +321,7 @@ var delete_ = function(args, callback, fallback) {
   if(!isArray(ids)) ids = [ids];
   debug("Delete object of rest class " + RestClass.schema.id +
            " having id " + ids.map(function(id){return id.toHexString()}));
-  get_collection(RestClass.schema.id, function(collection) {
+  RestClass.get_collection(function(collection) {
     collection.remove({_id: {'$in': ids}}, function(err, _) {
       if(err != null) { // as of 10/03/10, err is always null
         debug("Error while deleting");
@@ -341,7 +350,7 @@ var insert = function(args, callback, fallback) {
   var cache = args.session.cache;
   var awaiting_get_callbacks = args.session.awaiting_get_callbacks;
 
-  get_collection(RestClass.schema.id, function(collection) {
+  RestClass.get_collection(function(collection) {
     collection.insert(obj.unlink(), function(err, objs) {
       if(err != null) {
         debug("\nError when inserting:");
@@ -379,7 +388,7 @@ var clear_all = function(args, callback, fallback) {
    */
   clear_cache(args);
   var RestClass = args.RestClass;
-  get_collection(RestClass.schema.id, function(collection) {
+  RestClass.get_collection(function(collection) {
     collection.remove({}, function(err) {
       if(err == null) return callback && callback();
       debug("Error while removing collection " + RestClass.schema.id);
@@ -545,9 +554,9 @@ exports.getRFactory = function(schema, db_name, db_host, db_port) {
   db_port = db_port || 27017;
   if (!schema) throw('You must specify a schema');
   if (!db_name) throw('You must specify a DB name!'); 
-  mongo_server = new mongo.Server(db_host, db_port, {auto_reconnect: true}, {});
-  db = new mongo.Db(db_name, mongo_server);
-  init_connection_db();
+  var mongo_server = new mongo.Server(db_host, db_port, {auto_reconnect: true}, {});
+  var db = new mongo.Db(db_name, mongo_server);
+  var get_collection = init_connection_db(db);
 
   build_ref_lists(schema);
   return function() {
@@ -581,6 +590,7 @@ exports.getRFactory = function(schema, db_name, db_host, db_port) {
         insert: insert,
         clear_cache: clear_cache,
         clear_all: clear_all,
+        get_collection: get_collection,
       });
 
       RestClass.schema = schema[class_name].schema;

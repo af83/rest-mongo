@@ -30,7 +30,7 @@ exports.setup = function(callback) {
 
 exports.tests = [
 
-['Create facotry with bad args', 2, function() {
+['Create factory with bad args', 2, function() {
   assert.throws(function() {
     require("../rest-mongo").getRFactory();
   });
