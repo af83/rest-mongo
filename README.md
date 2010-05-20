@@ -41,7 +41,7 @@ Get a new R every time you need to get a new context to work in (at every client
 
 ### Create and save an object into the DB
 <pre><code>
-var lilly = R.Person({firstname: "Lilly"});
+var lilly = new R.Person({firstname: "Lilly"});
 lilly.save(function() {
   sys.puts("Lilly saved in DB with id " + lilly.id());
 });
@@ -76,7 +76,7 @@ lilly.delete_(function(){
 
 ### Usage of references:
 <pre><code>
-var harry = R.Person({firstname: "Harry", mother: lilly});
+var harry = new R.Person({firstname: "Harry", mother: lilly});
 harry.save(function() {
   sys.puts('Only the id of Lilly has been saved in harry.mother in DB.');
 });
