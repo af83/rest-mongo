@@ -102,10 +102,9 @@ This version needs:
   * [nodetk](http://github.com/AF83/nodetk)
 
 node-mongodb-native and nodetk are vendorized through git submodules:
-  $ git submodule update --init
+`$ git submodule update --init`
 
-To run the tests:
-  nodetests
+To run the tests: `nodetests`
 Please have a look at the nodetk README file to instlal nodetk.
 
 
