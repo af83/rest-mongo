@@ -1,6 +1,6 @@
 [submodule "vendor/node-mongodb-native"]
 	path = vendor/node-mongodb-native
-	url = http://github.com/christkv/node-mongodb-native.git
+	url = git://github.com/christkv/node-mongodb-native.git
 [submodule "vendor/nodetk"]
 	path = vendor/nodetk
-	url = git@github.com:AF83/nodetk.git
+	url = git://github.com/AF83/nodetk.git
