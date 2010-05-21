@@ -99,7 +99,15 @@ This version needs:
 
   * [node-mongodb-native](http://github.com/christkv/node-mongodb-native/) (at the exact version V0.7.1 - V0.7.2 to V0.7.4 are not working)
   * [mongodb](http://www.mongodb.org/display/DOCS/Downloads) (1.4.2 - The 1.5 serie doesn't seem to work fine yet...)
-  * [nodetk](http://github.com/AF83/nodetk) (after commit 8adb54316439e5f14853)
+  * [nodetk](http://github.com/AF83/nodetk)
+
+node-mongodb-native and nodetk are vendorized through git submodules:
+  $ git submodule update --init
+
+To run the tests:
+  nodetests
+Please have a look at the nodetk README file to instlal nodetk.
+
 
 
 ## License

@@ -1,7 +1,8 @@
+var rest_mongo = require("../rest-mongo");
+
 var sys = require("sys");
 var assert = require("nodetk/testing/custom_assert");
 var debug = require('nodetk/logging').debug;
-var rest_mongo = require("../rest-mongo");
 
 
 var schema = {

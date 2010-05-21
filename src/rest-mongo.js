@@ -4,6 +4,9 @@
 
  */
 
+require.paths.unshift("./vendor/nodetk/src")
+require.paths.unshift("./vendor/node-mongodb-native/lib")
+
 var sys = require('sys');
 
 var callbacks = require('nodetk/orchestration/callbacks');
