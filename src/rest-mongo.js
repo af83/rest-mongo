@@ -282,6 +282,13 @@ var update = function(args, callback, fallback) {
   var awaiting_get_callbacks = args.session.awaiting_get_callbacks;
 
   if(!isArray(ids)) ids = [ids];
+  // We do accept ids as hexa strings
+  if(typeof ids[0] == 'string') {
+    ids = ids.map(function(id) {
+      return ObjectID.createFromHexString(id);
+    });
+  }
+
   debug("Update objects of rest class " + RestClass.schema.id +
            " having ids " + ids.map(function(id){return id.toHexString()}));
   RestClass.get_collection(function(collection) {
