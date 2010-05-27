@@ -430,14 +430,14 @@ var unlink_references = function(obj) {
     if(key in refs.dict_ref_lists) 
       res[key] = obj[key] && obj[key].map(function(elmt) {
         return {_id: elmt._id};
-      }) || [];
+      }) || undefined;
     else if(key in refs.dict_refs)
-      res[key] = obj[key] && {_id: obj[key]._id} || null;
+      res[key] = obj[key] && {_id: obj[key]._id} || undefined;
     else res[key] = obj[key];
+    if(res[key] === undefined) delete res[key];
   }
   return res;
 };
-
 
 var link_references = function(obj, restClassId, rest_classes) {
   /* Given an object following the schema defined for rest_class,

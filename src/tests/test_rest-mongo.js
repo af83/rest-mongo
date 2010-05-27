@@ -185,6 +185,25 @@ exports.tests = [
   });
 }],
 
+['Create obj with no attributes', 9, function() {
+  // When something is not set, it must be "undefined", not 'null'.
+  // unless when list: empty list
+  var check_attributes = function(p) {
+    assert.strictEqual(p.firstname, undefined);
+    assert.strictEqual(p.mother, undefined);
+    assert.strictEqual(p.friends, undefined);
+  }
+  var p = new R.Person();
+  check_attributes(p);
+  p.save(function() {
+    check_attributes(p);
+    var id = p.id();
+    R.Person.clear_cache();
+    R.Person.get({ids: id}, function(p) {
+      check_attributes(p);
+    });
+  });
+}],
 
 ];
 
