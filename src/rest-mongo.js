@@ -501,6 +501,13 @@ var setRestClassProto = function(RestClass, rest_classes) {
       RestClass.update(args);
     },
     unlink: function(){return unlink_references(this)},
+    json: function() {
+      var base = {};
+      utils.extend(base, this.unlink());
+      if(this._id) base.id = this.id();
+      else delete base.id; // here the id is the function
+      return base;
+    },
     save: function(callback, fallback) {
       /* Save the obj to DB, creating it if necessary.
        *

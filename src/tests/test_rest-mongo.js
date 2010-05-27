@@ -3,6 +3,7 @@ var rest_mongo = require("../rest-mongo");
 var sys = require("sys");
 var assert = require("nodetk/testing/custom_assert");
 var debug = require('nodetk/logging').debug;
+var utils = require('nodetk/utils');
 
 
 var schema = {
@@ -187,7 +188,6 @@ exports.tests = [
 
 ['Create obj with no attributes', 9, function() {
   // When something is not set, it must be "undefined", not 'null'.
-  // unless when list: empty list
   var check_attributes = function(p) {
     assert.strictEqual(p.firstname, undefined);
     assert.strictEqual(p.mother, undefined);
@@ -202,6 +202,23 @@ exports.tests = [
     R.Person.get({ids: id}, function(p) {
       check_attributes(p);
     });
+  });
+}],
+
+['json method on obj', 6, function() {
+  var p = new R.Person();
+  var count = utils.count_properties(p.json());
+  assert.equal(count, 0);
+  p.firstname = "Pierre";
+  assert.deepEqual(p.json(), {firstname: "Pierre"});
+  count = utils.count_properties(p.json());
+  assert.equal(count, 1);
+  p.save(function() {
+    var data = p.json();
+    assert.ok(Boolean(data.id));
+    assert.equal(data.firstname, "Pierre");
+    count = utils.count_properties(p.json());
+    assert.equal(count, 2);
   });
 }],
 
