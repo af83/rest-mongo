@@ -4,8 +4,8 @@
 
  */
 
-require.paths.unshift("./vendor/nodetk/src")
-require.paths.unshift("./vendor/node-mongodb-native/lib")
+require.paths.unshift(__dirname + "/../vendor/nodetk/src")
+require.paths.unshift(__dirname + "/../vendor/node-mongodb-native/lib")
 
 var sys = require('sys');
 
