@@ -579,7 +579,7 @@ exports.getRFactory = function(schema, db_name, db_host, db_port) {
   return function() {
     var rest_classes = {};
 
-    for(var class_name in schema){
+    for(var prop_name in schema) (function(class_name) {
       debug("Create the rest class " + class_name);
 
       var session = {
@@ -618,7 +618,7 @@ exports.getRFactory = function(schema, db_name, db_host, db_port) {
         return session.cache[data._id] && session.cache[data._id]._update(data)
                || new RestClass(data, 1);
       };
-    }
+    })(prop_name);
 
     return utils.extend({
       clear_caches: function() {

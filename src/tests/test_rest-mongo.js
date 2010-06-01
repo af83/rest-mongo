@@ -22,6 +22,21 @@ var schema = {
         }
       }
     },
+
+    // This one is just here so we know there is no interference between objects
+    "Animal": {
+      resource: "/animals",
+      schema: {
+        id: "Animal",
+        description: "Dogs, cats, ...",
+        type: "object",
+
+        properties: {
+          name: {type: "string"},
+          owner: {'$ref': 'Person'}
+        }
+      }
+    }
 };
 
 
