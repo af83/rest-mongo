@@ -5,7 +5,6 @@
  */
 
 require.paths.unshift(__dirname + "/../vendor/nodetk/src")
-require.paths.unshift(__dirname + "/../vendor/node-mongodb-native/lib")
 
 var sys = require('sys');
 
@@ -13,55 +12,7 @@ var callbacks = require('nodetk/orchestration/callbacks');
 var debug = require('nodetk/logging').debug;
 var utils = require('nodetk/utils');
 
-var mongo = require("mongodb/db");
-utils.extend(mongo, require('mongodb/connection'));
-var ObjectID = require('mongodb/bson/bson').ObjectID;
-
-
-var init_connection_db = function(db) {
-  /* Open connection with DB + returns a get_collection() fct.
-   */
-  var todo_once_db_opened = [];
-  var client = null;
-
-  var get_collection = function(args, callback, fallback) {
-    /* Returns collection corresponding to RestClass given in args.
-     *
-     * Arguments:
-     *  - args:
-     *    - RestClass
-     *  - callback
-     *  - fallback
-     */
-    var name = args.RestClass.schema.id;
-    client.collection(name, function(err, collection) {
-      if(err == null) callback(collection);
-      else {
-        debug("\nError when getting collection:");
-        debug(err.stack);
-        fallback && fallback(err);
-      }
-    });
-  };
-
-  db.open(function(err, client_) {
-    if (err) {
-      debug('Error while opening connection with DB:')
-      debug(err.stack);
-      return;
-    }
-    client = client_;
-    todo_once_db_opened.forEach(function(args) {
-      get_collection.apply(this, args);
-    });
-    delete todo_once_db_opened;
-  });
-
-  return function() {
-    if(client != null) get_collection.apply(this, arguments);
-    else todo_once_db_opened.push(arguments);
-  };
-}
+var mongo_backend = require('./mongo_backend');
 
 
 var isFunction = function(fct) {
@@ -136,25 +87,18 @@ var index = function(args, callback, fallback) {
   var awaiting_get_callbacks = args.session.awaiting_get_callbacks;
 
   var key = JSON.stringify(query);
-  RestClass.get_collection(function(collection) {
-    collection.find(query, function(err, cursor) {
-      if(err != null) {
-        debug("\nError while index:");
-        debug(err.stack);
-        fallback && fallback(err);
-      }
-      else cursor.toArray(function(err, data) {
-        // TODO: handle err
-        data = data.map(RestClass.qau);
-        callback && callback(data);
-      });
-    });
+  args.backend.index(RestClass, query, function(objects) {
+    objects = objects.map(RestClass.qau);
+    callback && callback(objects);
+  }, function(error) {
+    debug("\nError while index:", err.message);
+    debug(err.stack);
+    fallback && fallback(err);
   });
 };
 
 
 var get = function(args, callback, fallback) {
-  // TODO: use the fallback!
   /* Get object(s) of RestClass having the requested id(s).
    * If only one requested id, will give an object to the callback, otherwise
    * it will give an array of objects.
@@ -176,16 +120,7 @@ var get = function(args, callback, fallback) {
   var awaiting_get_callbacks = args.session.awaiting_get_callbacks;
 
   if(!isArray(ids)) ids = [ids];
-
-  // We do accept ids as hexa strings
-  if(typeof ids[0] == 'string') {
-    ids = ids.map(function(id) {
-      return ObjectID.createFromHexString(id);
-    });
-  }
-
-  debug("Get objects of rest class " + RestClass.schema.id + 
-        " having ids " + ids.map(function(id){return id.toHexString()}));
+  debug("Get objects of rest class", RestClass.schema.id, "having ids", ids);
 
   var to_wait_for = [],
       to_get = [],
@@ -199,7 +134,7 @@ var get = function(args, callback, fallback) {
       else if(force_reload || obj._pl) to_get.push(id);
     }
     else {
-      obj = new RestClass({_id:id});
+      obj = new RestClass({id:id});
       to_get.push(id);
     }
     return obj;
@@ -221,41 +156,32 @@ var get = function(args, callback, fallback) {
     awaiting_get_callbacks[id] = [waiter];
   });
 
-  debug('to get: ' + to_get.map(function(id){return id.toHexString()}));
-  debug('to wait for: ' + to_wait_for.map(function(id){return id.toHexString()}));
+  debug('to get:', to_get);
+  debug('to wait for:', to_wait_for)
 
-  to_get.length && RestClass.get_collection(function(collection) {
-    collection.find({_id: {'$in': to_get}}, function(err, cursor) {
-      if(err != null) {
-        debug("Error on RestClass.get: " + err.stack);
-        all_objects = null;
-        to_get.forEach(function(id){
-          delete cache[id].id;
-          delete cache[id];
-          callbacks.empty_awaiting_callbacks(awaiting_get_callbacks, id);
-        });
-        return;
-      }
-      cursor.toArray(function(err, data) {
-        if(err != null) {
-          debug("Error while converting get result from cursor to array");
-        }
-        var got = {};
-        data.forEach(function(obj) {
-          got[obj._id] = true;
-        }); // for missing objects:
-        to_get.filter(function(id) {return !got[id]})
-              .forEach(function(missing) {
-          cache[missing] = null;
-          callbacks.empty_awaiting_callbacks(awaiting_get_callbacks, missing);
-        });
-        data.forEach(function(obj){
-          var id = obj._id;
-          cache[id]._update(obj);
-          if(cache[id]._pl) delete cache[id]._pl;
-          callbacks.empty_awaiting_callbacks(awaiting_get_callbacks, id);
-        });
-      });
+  to_get.length && args.backend.gets(RestClass, to_get, function(objects) {
+    var got = {};
+    objects.forEach(function(obj) {
+      got[obj.id] = true;
+    }); // for missing objects:
+    to_get.filter(function(id) {return !got[id]})
+          .forEach(function(missing) {
+      cache[missing] = null;
+      callbacks.empty_awaiting_callbacks(awaiting_get_callbacks, missing);
+    });
+    objects.forEach(function(obj){
+      var id = obj.id;
+      cache[id]._update(obj);
+      if(cache[id]._pl) delete cache[id]._pl;
+      callbacks.empty_awaiting_callbacks(awaiting_get_callbacks, id);
+    });
+  }, function(error) {
+    debug("Error on RestClass.get: " + error.stack);
+    all_objects = null;
+    to_get.forEach(function(id){
+      delete cache[id].id;
+      delete cache[id];
+      callbacks.empty_awaiting_callbacks(awaiting_get_callbacks, id);
     });
   });
 };
@@ -282,30 +208,25 @@ var update = function(args, callback, fallback) {
   var awaiting_get_callbacks = args.session.awaiting_get_callbacks;
 
   if(!isArray(ids)) ids = [ids];
-  // We do accept ids as hexa strings
-  if(typeof ids[0] == 'string') {
-    ids = ids.map(function(id) {
-      return ObjectID.createFromHexString(id);
+  debug("Update objects of rest class", RestClass.schema.id, "having ids", ids);
+  
+  var update_local_data = function() {
+     ids.map(function(id) {
+      cache[id] && cache[id]._update(data);
     });
+  };
+  // If no callback, just update local data and run the update
+  if (!callback) {
+    args.backend.update(RestClass, ids, data);
+    update_local_data();
   }
-
-  debug("Update objects of rest class " + RestClass.schema.id +
-           " having ids " + ids.map(function(id){return id.toHexString()}));
-  RestClass.get_collection(function(collection) {
-    var options = {upsert: false, safe: Boolean(callback), multi: true};
-    collection.update({_id: {'$in': ids}}, 
-                      {'$set': data},
-                      options, 
-                      function(err, document) {
-      if(err != null) {
-        debug("Error when updating a doc:", err.stack);
-        return fallback && fallback();
-      }
-      ids.map(function(id) {
-        cache[id] && cache[id]._update(data);
-      });
-      callback && callback();
-    });
+  // otherwise wait for return before updating local data
+  else args.backend.update(RestClass, ids, data, function() {
+    update_local_data();
+    callback && callback();
+  }, function(error) {
+    debug("Error when updating a doc:", error.stack);
+    fallback && fallback(error);
   });
 };
 
@@ -329,17 +250,14 @@ var delete_ = function(args, callback, fallback) {
   var awaiting_get_callbacks = args.session.awaiting_get_callbacks;
 
   if(!isArray(ids)) ids = [ids];
-  debug("Delete object of rest class " + RestClass.schema.id +
-           " having id " + ids.map(function(id){return id.toHexString()}));
-  RestClass.get_collection(function(collection) {
-    collection.remove({_id: {'$in': ids}}, function(err, _) {
-      if(err != null) { // as of 10/03/10, err is always null
-        debug("Error while deleting");
-        debug(err.stack);
-      }
-      ids.map(function(id) {delete cache[id]});
-      callback && callback(err);
-    });
+  debug("Delete object of rest class", RestClass.schema.id, "having id", ids);
+  args.backend.delete_(RestClass, ids, function() {
+    ids.map(function(id) {delete cache[id]});
+    callback && callback();
+  }, function(error) {
+    debug("Error while deleting:", err.message);
+    debug(err.stack);
+    fallback && fallback(error);
   });
 };
 
@@ -352,6 +270,7 @@ var insert = function(args, callback, fallback) {
    *    - obj: the object to insert in DB.
    *    - RestClass: the RestClass of the obj
    *    - session: the session in which we are working
+   *    - backend
    *  - callback(obj): to be called once the object has been successfully inserted.
    *  - fallback(err): to be called in case of error.
    */
@@ -360,16 +279,12 @@ var insert = function(args, callback, fallback) {
   var cache = args.session.cache;
   var awaiting_get_callbacks = args.session.awaiting_get_callbacks;
 
-  RestClass.get_collection(function(collection) {
-    collection.insert(obj.unlink(), function(err, objs) {
-      if(err != null) {
-        debug("\nError when inserting:");
-        debug(err.stack);
-        return fallback && fallback(err);
-      }
-      cache[objs[0]._id] = obj._update(objs[0]);
-      callback && callback(obj);
-    });
+  args.backend.insert(RestClass, obj.unlink(), function(new_obj) {
+    cache[new_obj.id] = obj._update(new_obj);
+    callback && callback(obj);
+  }, function(error) {
+    debug("\nError when inserting:", error.message);
+    debug(error.stack);
   });
 };
 
@@ -393,19 +308,17 @@ var clear_all = function(args, callback, fallback) {
    *  - args:
    *    - RestClass
    *    - session
+   *    - backend
    *  - callback(): to be called once the objects have been removed from DB.
    *  - fallback: to be called in case of error.
    */
   clear_cache(args);
   var RestClass = args.RestClass;
-  RestClass.get_collection(function(collection) {
-    collection.remove({}, function(err) {
-      if(err == null) return callback && callback();
-      debug("Error while removing collection " + RestClass.schema.id);
-      debug(err.stack);
-      fallback && fallback(err);
-    });
-  }, fallback);
+  args.backend.clear_all(RestClass, callback, function(error) {
+    debug("Error while removing objects", RestClass.schema.id, ':', error.message);
+    debug(error.stack);
+    fallback && fallback(error);
+  });
 };
 // ----------------------
 
@@ -429,10 +342,10 @@ var unlink_references = function(obj) {
   for(var key in obj.Class.schema.properties) {
     if(key in refs.dict_ref_lists) 
       res[key] = obj[key] && obj[key].map(function(elmt) {
-        return {_id: elmt._id};
+        return {id: elmt.id};
       }) || undefined;
     else if(key in refs.dict_refs)
-      res[key] = obj[key] && {_id: obj[key]._id} || undefined;
+      res[key] = obj[key] && {id: obj[key].id} || undefined;
     else res[key] = obj[key];
     if(res[key] === undefined) delete res[key];
   }
@@ -494,18 +407,16 @@ var setRestClassProto = function(RestClass, rest_classes) {
   RestClass.prototype = {
     Class: RestClass,
     delete_: function(callback, fallback){
-      RestClass.delete_({ids: [this._id]}, callback, fallback);
+      RestClass.delete_({ids: [this.id]}, callback, fallback);
     },
     update: function(args) {
-      args.ids = [this._id];
+      args.ids = [this.id];
       RestClass.update(args);
     },
     unlink: function(){return unlink_references(this)},
     json: function() {
       var base = {};
       utils.extend(base, this.unlink());
-      if(this._id) base.id = this.id();
-      else delete base.id; // here the id is the function
       return base;
     },
     save: function(callback, fallback) {
@@ -516,8 +427,8 @@ var setRestClassProto = function(RestClass, rest_classes) {
        *  - fallback(err): to be called in case of error.
        */
       var obj = this;
-      if('_id' in obj) { // The object already exist: use update
-        return RestClass.update({ids: [obj._id],
+      if('id' in obj) { // The object already exist: use update
+        return RestClass.update({ids: [obj.id],
                                  data: obj.unlink()
                                  }, callback, fallback);
       }
@@ -543,13 +454,10 @@ var setRestClassProto = function(RestClass, rest_classes) {
                      force_reload: true
                      }, callback, fallback);
     },
-    id: function() {
-      return this._id.toHexString();
-    }
   }
 };
 
-exports.getRFactory = function(schema, db_name, db_host, db_port) {
+exports.getRFactory = function(schema, backend_params) {
   /* Returns a R factory.
    * This factory return a R object at every call. Each R as its own "session",
    * meaning that two subsequent calls of R.Toto.get(2) will return the same object.
@@ -563,17 +471,10 @@ exports.getRFactory = function(schema, db_name, db_host, db_port) {
    *
    * Arguments:
    *  - schema: schema describing the nature of your data
-   *  - db_name: name of the DB you want to connect to
-   *  - db_host: optional, default to "localhost"
-   *  - db_port: optional, default to 27017
+   *  - backend_params: parameters to give when getting the backend
    */
-  db_host = db_host || "localhost";
-  db_port = db_port || 27017;
+  var backend = mongo_backend.get_backend(backend_params);
   if (!schema) throw('You must specify a schema');
-  if (!db_name) throw('You must specify a DB name!'); 
-  var mongo_server = new mongo.Server(db_host, db_port, {auto_reconnect: true}, {});
-  var db = new mongo.Db(db_name, mongo_server);
-  var get_collection = init_connection_db(db);
 
   build_ref_lists(schema);
   return function() {
@@ -591,7 +492,7 @@ exports.getRFactory = function(schema, db_name, db_host, db_port) {
         data = data || {};
         debug("Create a new object of rest class " + class_name +
                     " with data ", data);
-        data._id && (session.cache[data._id] = this);
+        data.id && (session.cache[data.id] = this);
         this._update(data);
         if(partially_loaded) this._pl = true;
       };
@@ -599,7 +500,11 @@ exports.getRFactory = function(schema, db_name, db_host, db_port) {
 
       setRestClassProto(RestClass, rest_classes);
 
-      delegate(RestClass, {session: session, RestClass: RestClass}, {
+      delegate(RestClass, {
+        session: session, 
+        RestClass: RestClass, 
+        backend: backend
+      }, {
         index: index,
         get: get,
         update: update,
@@ -607,7 +512,6 @@ exports.getRFactory = function(schema, db_name, db_host, db_port) {
         insert: insert,
         clear_cache: clear_cache,
         clear_all: clear_all,
-        get_collection: get_collection,
       });
 
       RestClass.schema = schema[class_name].schema;
@@ -615,7 +519,7 @@ exports.getRFactory = function(schema, db_name, db_host, db_port) {
 
       RestClass.qau = function(data){
         debug("qau on " + RestClass.schema.id + " with data: ", data);
-        return session.cache[data._id] && session.cache[data._id]._update(data)
+        return session.cache[data.id] && session.cache[data.id]._update(data)
                || new RestClass(data, 1);
       };
     })(prop_name);

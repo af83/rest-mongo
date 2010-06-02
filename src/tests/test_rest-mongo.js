@@ -40,7 +40,7 @@ var schema = {
 };
 
 
-var R = rest_mongo.getRFactory(schema, 'test-rest-mongo')();
+var R = rest_mongo.getRFactory(schema, {db_name: 'test-rest-mongo'})();
 
 exports.setup = function(callback) {
   R.Person.clear_all(callback);
@@ -63,9 +63,9 @@ exports.tests = [
   var p1 = new R.Person();
   p1.firstname = "Pierre";
   p1.save(function(p) {
-    assert.ok(Boolean(p._id && p._id.id));
+    assert.ok(Boolean(p.id));
 
-    R.Person.get({ids: p._id}, function(data) {
+    R.Person.get({ids: p.id}, function(data) {
       //sys.debug('Person back from db: ' + JSON.stringify(data));
       // TODO: check defaults are correctly sets, and eventual validation is done .
       assert.equal(data.firstname, 'Pierre');
@@ -83,7 +83,7 @@ exports.tests = [
     assert.equal(p.firstname, 'Ori'); // in case of getter/setter on the attribute
     p.save(function() {
       assert.equal(p.firstname, 'Ori'); // changed in current obj
-      R.Person.get({ids: p._id}, function(p2) {
+      R.Person.get({ids: p.id}, function(p2) {
         assert.equal(p2.firstname, 'Ori'); // changed in DB
         assert.equal(p, p2); // Same reference is returned
       });
@@ -100,12 +100,12 @@ exports.tests = [
       assert.equal(p2.firstname, 'Ori');
       assert.equal(p1, p12);
       assert.equal(p22, p22);
-      R.Person.update({ids: [p1._id, p2._id], data: {firstname: 'anonyme'}}, function() {
+      R.Person.update({ids: [p1.id, p2.id], data: {firstname: 'anonyme'}}, function() {
         assert.equal(p1.firstname, 'anonyme');
         assert.equal(p2.firstname, 'anonyme');
         // Clear the cache and try again, to check db values are right:
         R.Person.clear_cache();
-        R.Person.get({ids: [p1._id, p2._id]}, function(data) {
+        R.Person.get({ids: [p1.id, p2.id]}, function(data) {
           assert.equal(data[0].firstname, 'anonyme');
           assert.equal(data[1].firstname, 'anonyme');
         });
@@ -141,7 +141,7 @@ exports.tests = [
   // Delete a particular object
   var p1 = new R.Person({firstname: 'Pierre'});
   p1.save(function(p1) {
-    var id = p1._id;
+    var id = p1.id;
     assert.ok(Boolean(id));
     p1.delete_(function(){
       R.Person.get({ids: id}, function(data) {
@@ -212,9 +212,8 @@ exports.tests = [
   check_attributes(p);
   p.save(function() {
     check_attributes(p);
-    var id = p.id();
     R.Person.clear_cache();
-    R.Person.get({ids: id}, function(p) {
+    R.Person.get({ids: p.id}, function(p) {
       check_attributes(p);
     });
   });
