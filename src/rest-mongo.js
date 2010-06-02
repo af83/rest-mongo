@@ -65,6 +65,7 @@ var delegate = function(obj, args_sups, delegation_table) {
  *  - session: 
  *   - cache: cache where to look for objects
  *   - awaiting_get_callbacks: Callbacks to be called once an object is available
+ *   - backend: the store backend to make save/update... operations
  *
  *   These arguments are added by the RestClass, so you should not worry about them
  *   if you are calling RestClass.method
@@ -142,7 +143,6 @@ var get = function(args, callback, fallback) {
 
   if(all_objects.length == 1) all_objects = all_objects[0];
   waiter = callbacks.get_waiter(to_wait_for.length + to_get.length, function(){
-    //callback && callback(all_objects);
     var res = ids.map(function(id){return cache[id]});
     if (ids.length == 1) res = res[0];
     callback && callback(res);
@@ -268,9 +268,6 @@ var insert = function(args, callback, fallback) {
    * Arguments:
    *  - args:
    *    - obj: the object to insert in DB.
-   *    - RestClass: the RestClass of the obj
-   *    - session: the session in which we are working
-   *    - backend
    *  - callback(obj): to be called once the object has been successfully inserted.
    *  - fallback(err): to be called in case of error.
    */
@@ -294,7 +291,6 @@ var clear_cache = function(args) {
    *
    * Arguments:
    *  - args:
-   *    - session
    */
   args.session.cache = {};
   args.session.awaiting_get_callbacks = {};
@@ -306,9 +302,6 @@ var clear_all = function(args, callback, fallback) {
    *
    * Arguments:
    *  - args:
-   *    - RestClass
-   *    - session
-   *    - backend
    *  - callback(): to be called once the objects have been removed from DB.
    *  - fallback: to be called in case of error.
    */
