@@ -12,15 +12,6 @@ var utils = require('nodetk/utils');
 
 var mongo_backend = require('./mongo_backend');
 
-var isArray = function(obj) {
-  return obj.constructor == Array;
-};
-
-var each = function(obj, callback) {
-  obj.forEach(function(attr_name) {
-    callback(attr_name, obj[attr_name]);
-  });
-};
 
 var delegate = function(obj, args_sups, delegation_table) {
   /* Defines new methods in given obj such that methods call
@@ -113,7 +104,7 @@ var get = function(args, callback, fallback) {
   var cache = args.session.cache;
   var awaiting_get_callbacks = args.session.awaiting_get_callbacks;
 
-  if(!isArray(ids)) ids = [ids];
+  if(!utils.isArray(ids)) ids = [ids];
   debug("Get objects of rest class", RestClass.schema.id, "having ids", ids);
 
   var to_wait_for = [],
@@ -200,7 +191,7 @@ var update = function(args, callback, fallback) {
   var cache = args.session.cache;
   var awaiting_get_callbacks = args.session.awaiting_get_callbacks;
 
-  if(!isArray(ids)) ids = [ids];
+  if(!utils.isArray(ids)) ids = [ids];
   debug("Update objects of rest class", RestClass.schema.id, "having ids", ids);
   
   var update_local_data = function() {
@@ -242,7 +233,7 @@ var delete_ = function(args, callback, fallback) {
   var cache = args.session.cache;
   var awaiting_get_callbacks = args.session.awaiting_get_callbacks;
 
-  if(!isArray(ids)) ids = [ids];
+  if(!utils.isArray(ids)) ids = [ids];
   debug("Delete object of rest class", RestClass.schema.id, "having id", ids);
   args.backend.delete_(RestClass, ids, function() {
     ids.map(function(id) {delete cache[id]});
@@ -513,7 +504,7 @@ exports.getRFactory = function(schema, backend_params) {
     return utils.extend({
       clear_caches: function() {
         debug("Clear the caches");
-        each(rest_classes, function(name, RestClass){
+        utils.each(rest_classes, function(name, RestClass){
           RestClass.clear_cache();
         });
       }
