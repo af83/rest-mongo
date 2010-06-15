@@ -6,18 +6,11 @@
 
 require.paths.unshift(__dirname + "/../vendor/nodetk/src")
 
-var sys = require('sys');
-
 var callbacks = require('nodetk/orchestration/callbacks');
 var debug = require('nodetk/logging').debug;
 var utils = require('nodetk/utils');
 
 var mongo_backend = require('./mongo_backend');
-
-
-var isFunction = function(fct) {
-  return typeof fct == 'function';
-};
 
 var isArray = function(obj) {
   return obj.constructor == Array;
