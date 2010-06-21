@@ -58,6 +58,16 @@ var init_connection_db = function(db) {
 };
 
 
+var stringids_to_bsonids = function(ids) {
+  /* Returns list of bson ids corresponding to given ids.
+   * Ids with wrong formats (not /\w{24}/) are removed from the list
+   * (and so their bson representation won't appear in result)
+   */
+  return ids.map(function(id) {
+    if(id.match(/^\w{24}$/)) return ObjectID.createFromHexString(id);
+  });
+};
+
 var bsonid_to_stringid = function(obj) {
   /* convert bson obj._id to string obj.id
    */
@@ -132,7 +142,7 @@ var index = exports.index = function(collection, query, callback, fallback) {
 
 
 var gets = exports.gets = function(collection, ids, callback, fallback) {
-  ids = ids.map(ObjectID.createFromHexString);
+  ids = stringids_to_bsonids(ids);
   collection.find({_id: {'$in': ids}}, function(err, cursor) {
     if(err != null) return fallback && fallback(err);
     cursor.toArray(function(err, objects) {
@@ -145,7 +155,7 @@ var gets = exports.gets = function(collection, ids, callback, fallback) {
 
 
 var update = exports.update = function(collection, ids, data, callback, fallback) {
-  ids = ids.map(ObjectID.createFromHexString);
+  ids = stringids_to_bsonids(ids);
   var options = {upsert: false, safe: Boolean(callback), multi: true};
   collection.update({_id: {'$in': ids}}, {'$set': data}, options, 
                     function(err, document) {
@@ -156,7 +166,7 @@ var update = exports.update = function(collection, ids, data, callback, fallback
 
 
 var delete_ = exports.delete_ = function(collection, ids, callback, fallback) {
-  ids = ids.map(ObjectID.createFromHexString);
+  ids = stringids_to_bsonids(ids);
   collection.remove({_id: {'$in': ids}}, function(err, _) {
     if(err != null) return fallback && fallback(err);
     callback && callback();
