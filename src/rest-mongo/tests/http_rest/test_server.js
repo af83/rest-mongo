@@ -39,15 +39,7 @@ exports.setup = function(callback) {
   var waiter_clear = CLB.get_waiter(2, function() {
     DATA.p1 = new R.Person({firstname: "Pierre"});
     DATA.p2 = new R.Person({firstname: "Kevin"});
-
-    // TODO: make something in core to do that easily
-    // like R.save([p1, p2], callback, fallback)
-    var waiter = CLB.get_waiter(2, function() {
-      R.clear_caches();
-      callback();  
-    });
-    DATA.p1.save(waiter);
-    DATA.p2.save(waiter);
+    R.save([DATA.p1, DATA.p2], callback);
   });
   R.Person.clear_all(waiter_clear);
   R.Animal.clear_all(waiter_clear);

@@ -434,6 +434,24 @@ var setRestClassProto = function(RestClass, rest_classes) {
   }
 };
 
+var save = function(objects, callback, fallback) {
+  /* Save the given objects and call callback once all saved, 
+   * or fallback if one fail to be saved.
+   *
+   * Arguments:
+   *  - objects: list of RestClass objects to be saved
+   *  - callback: optional, success callback fct.
+   *  - fallback(err): optional, failure calback fct.
+   */
+  var waiter = callbacks.get_waiter(objects.length, function() {
+    callback && callback();  
+  }, fallback);
+  objects.forEach(function(obj) {
+    obj.save(waiter, function(){waiter.fall()});
+  });
+};
+
+
 exports.getRFactory = function(schema, backend_params) {
   /* Returns a R factory.
    * This factory return a R object at every call. Each R as its own "session",
@@ -507,7 +525,8 @@ exports.getRFactory = function(schema, backend_params) {
         utils.each(rest_classes, function(name, RestClass){
           RestClass.clear_cache();
         });
-      }
+      },
+      save: save
     }, rest_classes);
   };
 };
