@@ -42,7 +42,10 @@ exports.setup = function(callback) {
 
     // TODO: make something in core to do that easily
     // like R.save([p1, p2], callback, fallback)
-    var waiter = CLB.get_waiter(2, callback);
+    var waiter = CLB.get_waiter(2, function() {
+      R.clear_caches();
+      callback();  
+    });
     DATA.p1.save(waiter);
     DATA.p2.save(waiter);
   });
@@ -72,7 +75,13 @@ exports.tests = [
     assert.equal(response.statusCode, 200);
     assert.deepEqual(response.headers, expected_header_json);
     rest_server.get_body_json(response, function(data) {
-      assert.deepEqual(data, [DATA.p1.json(), DATA.p2.json()]);
+      var d1 = JSON.stringify(data);
+      var d2 = JSON.stringify([DATA.p1.json(), DATA.p2.json()]);
+      var d3 = JSON.stringify([DATA.p2.json(), DATA.p1.json()]);
+      assert.ok(d1 == d2 || d1 == d3);
+      // The order of returned object is not determinist enough, so we can not
+      // do that:
+      //assert.deepEqual(data, [DATA.p1.json(), DATA.p2.json()]);
     });
   });
   request.end();
@@ -183,6 +192,106 @@ exports.tests = [
     });
   });
   request.write(JSON.stringify({firstname: 'Luc', weapon: 'knife'}));
+  request.end();
+}],
+
+
+['PUT /people/id1', 3, function() {
+  var request = client.request('PUT', '/people/' + DATA.p1.id, {});
+  request.write(JSON.stringify({firstname: 'anonymous'}));
+  request.addListener('response', function(response) {
+    R.Person.clear_cache();
+    R.Person.get({ids: DATA.p1.id}, function(pierre) {
+      assert.equal(pierre.firstname, 'anonymous');
+    });
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(response.headers, expected_header);
+  });
+  request.end();
+}],
+
+
+['PUT /people/id1,id2', 3, function() {
+  var url = '/people/' + DATA.p1.id + ',' + DATA.p2.id;
+  var request = client.request('PUT', url, {});
+  request.write(JSON.stringify({firstname: 'Clone'}));
+  request.addListener('response', function(response) {
+    R.Person.clear_cache();
+    R.Person.get({ids: [DATA.p1.id, DATA.p2.id]}, function(persons) {
+      persons = persons.map(function(p) {return p.json()});
+      var expected = [{firstname: 'Clone', id: DATA.p1.id},
+                      {firstname: 'Clone', id: DATA.p2.id}]
+      assert.deepEqual(persons, expected);
+    });
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(response.headers, expected_header);
+  });
+  request.end();
+}],
+
+
+['PUT /people/id1,id2,toto', 3, function() {
+  var url = '/people/' + DATA.p1.id + ',' + DATA.p2.id + ',toto';
+  var request = client.request('PUT', url, {});
+  request.write(JSON.stringify({firstname: 'Clone'}));
+  request.addListener('response', function(response) {
+    R.Person.clear_cache();
+    R.Person.get({ids: [DATA.p1.id, DATA.p2.id]}, function(persons) {
+      persons = persons.map(function(p) {return p.json()});
+      var expected = [{firstname: 'Clone', id: DATA.p1.id},
+                      {firstname: 'Clone', id: DATA.p2.id}]
+      assert.deepEqual(persons, expected);
+    });
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(response.headers, expected_header);
+  });
+  request.end();
+}],
+
+
+['DELETE /people/id1', 4, function() {
+  var request = client.request('DELETE', '/people/' + DATA.p1.id, {});
+  request.addListener('response', function(response) {
+    R.Person.clear_cache();
+    R.Person.index(function(data) {
+      assert.equal(data.length, 1);
+    });
+    R.Person.get({ids: DATA.p1.id}, function(pierre) {
+      assert.equal(pierre, null);
+    });
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(response.headers, expected_header);
+  });
+  request.end();
+}],
+
+
+['DELETE /people/id1,id2', 3, function() {
+  var url = '/people/' + DATA.p1.id + ',' + DATA.p2.id;
+  var request = client.request('DELETE', url, {});
+  request.addListener('response', function(response) {
+    R.Person.clear_cache();
+    R.Person.index(function(data) {
+      assert.equal(data.length, 0);
+    });
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(response.headers, expected_header);
+  });
+  request.end();
+}],
+
+
+['DELETE /people/id1,id2,toto', 3, function() {
+  var url = '/people/' + DATA.p1.id + ',' + DATA.p2.id + ',toto';
+  var request = client.request('DELETE', url, {});
+  request.addListener('response', function(response) {
+    R.Person.clear_cache();
+    R.Person.index(function(data) {
+      assert.equal(data.length, 0);
+    });
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(response.headers, expected_header);
+  });
   request.end();
 }],
 

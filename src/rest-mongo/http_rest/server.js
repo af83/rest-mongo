@@ -82,48 +82,69 @@ exports.plug = function(server, schema, RFactory) {
       },
 
       // Create
-      'POST': function(response, _, request) {
+      'POST': function(response, _, data) {
+        // TODO: check data more carefully (handle mandatory stuff)
         var R = RFactory();
-        get_body_json(request, function(data) {
-          obj = new R[class_name](data);
-          obj.save(function() {
-            response.writeHead(201);
-            response.end();
-          });
+        obj = new R[class_name](data);
+        obj.save(function() {
+          response.writeHead(201);
+          response.end();
         });
       }
 
     }]);
 
-    // GET: /resource/id
-    routing.push([new RegExp('^' + resource + "/(\\w+)$"), {
-      'GET': function(response, match) {
-        var id = match[1];
-        var R = RFactory();
-        R[class_name].get({ids: id}, function(obj) {
-          if(obj) return send_object(obj, response);
-          response.writeHead(404);
-          response.end();
-        });
-      },
-    }]);
 
-    // GETs (more than one id asked in same request): /resource/id1,id2[...]
+    // /resource/id1[,id2[,...]]
     routing.push([new RegExp('^' + resource + "/(\\w+(?:,\\w+)*)$"), {
+
+      // GETs /resource/id1[,id2[,...]]
       'GET': function(response, match) {
-        // handle single and multiple gets (using previous regexp)
         var ids = match[1].split(",");
         var R = RFactory();
         R[class_name].get({ids: ids}, function(objects) {
-          // XXX: handle 404 if missing one?
-          objects = objects.filter(function(obj) {
-            return obj != null;  
-          });
-          send_objects(objects, response);
+          if(ids.length == 1) {
+            if(objects) return send_object(objects, response);
+            response.writeHead(404);
+            response.end();
+          }
+          else {
+            // XXX: handle 404 if missing one?
+            objects = objects.filter(function(obj) {
+              return obj != null;  
+            });
+            send_objects(objects, response);
+          }
         });
       },
-    }]);
+      
+      // Update
+      'PUT': function(response, match, data) {
+        var ids = match[1].split(",");
+        var R = RFactory();
+        R[class_name].update({ids: ids, data: data}, function(objects) {
+          response.writeHead(200);
+          response.end();
+        }, function(error) {
+          response.writeHead(500);
+          response.end();
+        });
+      },
 
+      // DELETE /resource/id1,id2[...]
+      'DELETE': function(response, match) {
+        var ids = match[1].split(",");
+        var R = RFactory();
+        R[class_name].delete_({ids: ids}, function() {
+          response.writeHead(200);
+          response.end();
+        }, function(err) {
+          response.writeHead(500);
+          response.end();
+        });
+      }
+
+    }]);
 
 
   });
@@ -132,18 +153,22 @@ exports.plug = function(server, schema, RFactory) {
     var url = URL.parse(request.url);
     var method = request.method; // TODO: lookup for fake delete / update ...
 
-    sys.puts('pathname: ' + url.pathname);
     for(var i=0; i<routing.length; i++) {
       var route = routing[i][0],
           action = routing[i][1][method],
           match;
       try {
-        sys.puts('Try against ' + route);
         match = url.pathname.match(route);
       } catch(e) {sys.puts('error: ' + e);};
-      if(match) {
-        sys.puts('match!');
-        return action && action(response, match, request);
+      if(match && action) {
+        var data;
+        if({'POST': true, 'PUT': true}[request.method]) {
+          get_body_json(request, function(data) {
+            action(response, match, data);
+          });
+          return;
+        }
+        return action(response, match);
       }
     }
   });

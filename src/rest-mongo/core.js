@@ -76,9 +76,9 @@ var index = function(args, callback, fallback) {
     objects = objects.map(RestClass.qau);
     callback && callback(objects);
   }, function(error) {
-    debug("\nError while index:", err.message);
-    debug(err.stack);
-    fallback && fallback(err);
+    debug("\nError while index:", error.message);
+    debug(error.stack);
+    fallback && fallback(error);
   });
 };
 

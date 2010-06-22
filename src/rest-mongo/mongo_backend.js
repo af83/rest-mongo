@@ -130,7 +130,7 @@ var get_backend = exports.get_backend = function(params) {
 
 
 var index = exports.index = function(collection, query, callback, fallback) {
-  collection.find(query, function(err, cursor) {
+  collection.find(query, {sort: [['_id', 'descending']]}, function(err, cursor) {
     if(err != null) return fallback(err);
     else cursor.toArray(function(err, objects) {
       if(err != null) return fallback(err);
