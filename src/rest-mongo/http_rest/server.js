@@ -91,6 +91,18 @@ exports.plug = function(server, schema, RFactory) {
           response.write(JSON.stringify(obj.json()));
           response.end();
         });
+      },
+
+      // Delete whole collection
+      'DELETE': function(response) {
+        var R = RFactory();
+        R[class_name].clear_all(function() {
+           response.writeHead(200);
+           response.end();
+        }, function(error) {
+          response.writeHead(500);
+          response.end();
+        });
       }
 
     }]);
@@ -153,6 +165,8 @@ exports.plug = function(server, schema, RFactory) {
   server.addListener('request', function(request, response) {
     var url = URL.parse(request.url);
     var method = request.method; // TODO: lookup for fake delete / update ...
+
+    debug(method + ':' + url.pathname);
 
     for(var i=0; i<routing.length; i++) {
       var route = routing[i][0],

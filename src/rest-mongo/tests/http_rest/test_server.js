@@ -294,6 +294,23 @@ exports.tests = [
 }],
 
 
+['DELETE /people', 4, function() {
+  var request = client.request('DELETE', '/people', {});
+  request.addListener('response', function(response) {
+    R.Person.clear_cache();
+    R.Person.index(function(data) {
+      assert.equal(data.length, 0);
+    });
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(response.headers, expected_header);
+  });
+  R.Person.index(function(all) {
+    assert.equal(all.length, 2);
+    request.end();
+  });
+}],
+
+
 ];
 
 
