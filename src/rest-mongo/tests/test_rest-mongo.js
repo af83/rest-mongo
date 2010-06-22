@@ -1,7 +1,6 @@
 require.paths.unshift(__dirname + '/../../');
 
 var rest_mongo = require("rest-mongo/core");
-var mongo_backend = require('rest-mongo/mongo_backend');
 
 var sys = require("sys");
 var assert = require("nodetk/testing/custom_assert");
@@ -10,7 +9,18 @@ var utils = require('nodetk/utils');
 
 
 var schema = require('rest-mongo/tests/schema').schema;
-var backend = mongo_backend.get_backend({db_name: 'test-rest-mongo'});
+var backend;
+if(process.browser) {
+  var jbackend = require('rest-mongo/http_rest/jquery_backend');
+  backend = jbackend.get_backend();
+}
+else {
+  // Note: we can not use "XHR + eval" import on browser side
+  // because of this conditionnal import
+  var mongo_backend = require('rest-mongo/mongo_backend');
+  backend = mongo_backend.get_backend({db_name: 'test-rest-mongo'});
+}
+
 var R = rest_mongo.getRFactory(schema, backend)();
 
 exports.setup = function(callback) {

@@ -1,6 +1,6 @@
 /* 
    The rest module provides an easy way to manipulate objects
-   and communicate with mongo db.
+   and communicate with backend db (mongo, rest server...).
 
  */
 

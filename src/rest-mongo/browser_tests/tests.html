@@ -1,0 +1,43 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr" id="html">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>rest-mongo browser functionnal tests</title>
+
+    <script type="text/javascript" src="/jquery.js"></script>
+    <script type="text/javascript" src="/init_browser.js"></script>
+    <script type="text/javascript" src="/yabble.js"></script>
+    <script type="text/javascript">
+      require.reset();
+
+      require.useScriptTags();
+      require.setModuleRoot('wrapped_js/');
+
+      require.ensure([
+        'sys',
+        'assert',
+        'events',
+        'tests',
+        
+        'rest-mongo/core',
+        'rest-mongo/http_rest/jquery_backend',
+        'rest-mongo/tests/schema',
+        'rest-mongo/tests/test_rest-mongo',
+      
+        'nodetk/logging',
+        'nodetk/testing/tests_runner',
+        'nodetk/testing/custom_assert',
+        'nodetk/orchestration/callbacks',
+        'nodetk/utils',
+      ], function() {
+        require.run('tests');
+      });
+    </script>
+  </head>
+
+  <body>
+    <h1>rest-mongo browser functionnal tests</h1>
+  </body>
+
+</html>
+
