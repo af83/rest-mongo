@@ -1,6 +1,7 @@
 require.paths.unshift(__dirname + '/../../');
 
 var rest_mongo = require("rest-mongo/core");
+var mongo_backend = require('rest-mongo/mongo_backend');
 
 var sys = require("sys");
 var assert = require("nodetk/testing/custom_assert");
@@ -9,7 +10,8 @@ var utils = require('nodetk/utils');
 
 
 var schema = require('rest-mongo/tests/schema').schema;
-var R = rest_mongo.getRFactory(schema, {db_name: 'test-rest-mongo'})();
+var backend = mongo_backend.get_backend({db_name: 'test-rest-mongo'});
+var R = rest_mongo.getRFactory(schema, backend)();
 
 exports.setup = function(callback) {
   R.Person.clear_all(callback);

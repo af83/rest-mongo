@@ -10,13 +10,15 @@ var http = require("http"),
 
     rest_server = require('rest-mongo/http_rest/server'),
     rest_mongo = require('rest-mongo/core'),
+    mongo_backend = require('rest-mongo/mongo_backend'),
     schema = require('rest-mongo/tests/schema').schema;
 
 
 
 var server;
 var client;
-var RFactory = rest_mongo.getRFactory(schema, {db_name: 'test-rest-mongo'});
+var backend = mongo_backend.get_backend({db_name: 'test-rest-mongo'});
+    RFactory = rest_mongo.getRFactory(schema, backend);
 
 
 (function() {

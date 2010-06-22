@@ -10,8 +10,6 @@ var callbacks = require('nodetk/orchestration/callbacks');
 var debug = require('nodetk/logging').debug;
 var utils = require('nodetk/utils');
 
-var mongo_backend = require('./mongo_backend');
-
 
 var delegate = function(obj, args_sups, delegation_table) {
   /* Defines new methods in given obj such that methods call
@@ -452,7 +450,7 @@ var save = function(objects, callback, fallback) {
 };
 
 
-exports.getRFactory = function(schema, backend_params) {
+exports.getRFactory = function(schema, backend) {
   /* Returns a R factory.
    * This factory return a R object at every call. Each R as its own "session",
    * meaning that two subsequent calls of R.Toto.get(2) will return the same object.
@@ -460,16 +458,18 @@ exports.getRFactory = function(schema, backend_params) {
    * not the same instances (modify one won't modify the second).
    *
    * The typical use is to do:
-   *  var RFactory = getRFactory();
+   *  var RFactory = getRFactory(schema, backend);
    *
    * and then for every request (or unit of work): var R = RFactory();
    *
    * Arguments:
-   *  - schema: schema describing the nature of your data
-   *  - backend_params: parameters to give when getting the backend
+   *  - schema: schema describing the nature of your data.
+   *  - backend: backend to use for storage. See backend_interface.js to know
+   *    what methods a backend should define.
+   *
    */
-  var backend = mongo_backend.get_backend(backend_params);
   if (!schema) throw('You must specify a schema');
+  if (!backend) throw('You must give a backend');
 
   build_ref_lists(schema);
   return function() {
