@@ -88,6 +88,7 @@ exports.plug = function(server, schema, RFactory) {
         obj = new R[class_name](data);
         obj.save(function() {
           response.writeHead(201);
+          response.write(JSON.stringify(obj.json()));
           response.end();
         });
       }

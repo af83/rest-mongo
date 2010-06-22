@@ -156,11 +156,15 @@ exports.tests = [
 }],
 
 
-['POST /people', 4,function() {
+['POST /people', 5,function() {
   var request = client.request('POST', '/people', {});
   request.addListener('response', function(response) {
     assert.equal(response.statusCode, 201);
     assert.deepEqual(response.headers, expected_header);
+    rest_server.get_body_json(response, function(data) {
+      // The object is sent back as answer, it now has an id.
+      assert.ok(data.id);
+    });
     R.Person.index(function(data) {
       assert.equal(data.length, 3);
       var p = data.filter(function(obj){return obj.firstname == 'Luc'})[0];
