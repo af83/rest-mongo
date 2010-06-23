@@ -76,7 +76,13 @@ exports.plug = function(server, schema, RFactory) {
       // Index
       'GET': function(response, _, data) {
         var R = RFactory();
-        R[class_name].index({query: data}, function(objects) {
+        var query = {};
+        debug("query", data);
+        debug(schema);
+        for(var criteria in data) if (criteria in schema.properties) {
+          query[criteria] = data[criteria];
+        }
+        R[class_name].index({query: query}, function(objects) {
           send_objects(objects, response);
         });
       },

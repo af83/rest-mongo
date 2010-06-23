@@ -95,6 +95,20 @@ exports.tests = [
 }],
 
 
+['Index on Person with query and irrelevant data', 3, function() {
+  // data not appearing in schema is not used for query
+  var request = client.request('GET', '/people?firstname=Pierre&_=2344', {});
+  request.addListener('response', function(response) {
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(response.headers, expected_header_json);
+    rest_server.get_body_json(response, function(data) {
+      assert.deepEqual(data, [DATA.p1.json()]);
+    });
+  });
+  request.end();
+}],
+
+
 ['Index on Animals (no data)', 3, function() {
   var request = client.request('GET', '/animals', {});
   request.addListener('response', function(response) {
