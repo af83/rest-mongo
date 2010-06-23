@@ -104,15 +104,13 @@ exports.tests = [
   var p2 = new R.Person({firstname: 'Ori'});
   R.Person.index({}, function(data) {
     assert.equal(data.length, 0);
-    p1.save(function() {
-      p2.save(function() {
-        R.Person.index({}, function(data) {
-          assert.equal(data.length, 2);
-        });
-        R.Person.index({query: {firstname: 'Pierre'}}, function(data) {
-          assert.equal(data.length, 1);
-          assert.equal(data[0].firstname, 'Pierre');
-        });
+    R.save([p1, p2], function() {
+      R.Person.index({}, function(data) {
+        assert.equal(data.length, 2);
+      });
+      R.Person.index({query: {firstname: 'Pierre'}}, function(data) {
+        assert.equal(data.length, 1);
+        assert.equal(data[0].firstname, 'Pierre');
       });
     });
   });
