@@ -1,101 +1,53 @@
 
-var backend = {};
 
-backend.index = function(RestClass, query, callback, fallback) {
+var ajax = function(type, url, query, callback, fallback) {
   $.ajax({
-    url: RestClass.resource,
-    type: 'GET',
+    url: url,
+    type: type,
     data: query,
     dataType: 'json',
     cache: false,
-    success: callback,
-    error: function(){
-      fallback && fallback();
+    success: function(data) {
+      callback && callback(data)
+    },
+    error: function(req){
+      fallback && fallback(req);
     }
   });
-
 };
 
+var backend = {
+  index: function(RestClass, query, callback, fallback) {
+    ajax('GET', RestClass.resource, query, callback, fallback);
+  },
 
-backend.gets = function(RestClass, ids, callback, fallback) {
-  $.ajax({
-    url: RestClass.resource + '/' + ids.join(','),
-    dataType: 'json',
-    cache: false,
-    success: function(data) {
+  gets: function(RestClass, ids, callback, fallback) {
+    ajax('GET', RestClass.resource + '/' + ids.join(','), {}, function(data) {
       if(ids.length == 1) data = [data];
       callback && callback(data);
-    },
-    error: function(request) {
+    }, function(request) {
       if(request.status == 404) return callback && callback([]);
       fallback && fallback();
-    }
-  });
+    });
+  },
 
-};
+  update: function(RestClass, ids, data, callback, fallback) {
+    ajax('PUT', RestClass.resource + '/' + ids.join(','), JSON.stringify(data),
+         callback, fallback);
+  },
 
+  delete_: function(RestClass, ids, callback, fallback) {
+    ajax('DELETE', RestClass.resource + '/' + ids.join(','), {}, 
+         callback, fallback);
+  },
 
-backend.update = function(RestClass, ids, data, callback, fallback) {
-  $.ajax({
-    url: RestClass.resource + '/' + ids.join(','),
-    type: 'PUT',
-    data: JSON.stringify(data),
-    dataType: 'json',
-    cache: false,
-    success: function(data) {
-      callback && callback();
-    },
-    error: function(){
-      fallback && fallback();
-    }
-  });
-};
+  insert: function(RestClass, obj, callback, fallback) {
+    ajax('POST', RestClass.resource, JSON.stringify(obj), callback, fallback);
+  },
 
-
-backend.delete_ = function(RestClass, ids, callback, fallback) {
-  $.ajax({
-    url: RestClass.resource + '/' + ids.join(','),
-    type: 'DELETE',
-    cache: false,
-    success: function(data) {
-      callback && callback();
-    },
-    error: function(){
-      fallback && fallback();
-    }
-  });
-};
-
-
-backend.insert = function(RestClass, obj, callback, fallback) {
-  $.ajax({
-    url: RestClass.resource,
-    type: 'POST',
-    data: JSON.stringify(obj),
-    dataType: 'json',
-    cache: false,
-    success: function(data) {
-      callback && callback(data);
-    },
-    error: function(){
-      fallback && fallback();
-    }
-  });
-};
-
-
-backend.clear_all = function(RestClass, callback, fallback) {
-  $.ajax({
-    url: RestClass.resource,
-    type: 'DELETE',
-    cache: false,
-    success: function() {
-      callback && callback();
-    },
-    error: function(){
-      fallback && fallback();
-    }
-  });
+  clear_all: function(RestClass, callback, fallback) {
+    ajax('DELETE', RestClass.resource, {}, callback, fallback);
+  }
 };
 
 
