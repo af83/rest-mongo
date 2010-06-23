@@ -2,9 +2,9 @@
 var backend = {};
 
 backend.index = function(RestClass, query, callback, fallback) {
-  console.log("index");
   $.ajax({
     url: RestClass.resource,
+    type: 'GET',
     data: query,
     dataType: 'json',
     cache: false,
@@ -18,27 +18,28 @@ backend.index = function(RestClass, query, callback, fallback) {
 
 
 backend.gets = function(RestClass, ids, callback, fallback) {
-  console.log('gets');
   $.ajax({
     url: RestClass.resource + '/' + ids.join(','),
     dataType: 'json',
     cache: false,
     success: function(data) {
-      callback && callback();
+      if(ids.length == 1) data = [data];
+      callback && callback(data);
     },
-    error: function(){
+    error: function(request) {
+      if(request.status == 404) return callback && callback([]);
       fallback && fallback();
     }
   });
 
 };
 
+
 backend.update = function(RestClass, ids, data, callback, fallback) {
-  console.log("update");
   $.ajax({
     url: RestClass.resource + '/' + ids.join(','),
-    type: 'POST',
-    data: data,
+    type: 'PUT',
+    data: JSON.stringify(data),
     dataType: 'json',
     cache: false,
     success: function(data) {
@@ -52,12 +53,21 @@ backend.update = function(RestClass, ids, data, callback, fallback) {
 
 
 backend.delete_ = function(RestClass, ids, callback, fallback) {
-  console.log('delete');
+  $.ajax({
+    url: RestClass.resource + '/' + ids.join(','),
+    type: 'DELETE',
+    cache: false,
+    success: function(data) {
+      callback && callback();
+    },
+    error: function(){
+      fallback && fallback();
+    }
+  });
 };
 
 
 backend.insert = function(RestClass, obj, callback, fallback) {
-  console.log('insert');
   $.ajax({
     url: RestClass.resource,
     type: 'POST',
@@ -75,8 +85,17 @@ backend.insert = function(RestClass, obj, callback, fallback) {
 
 
 backend.clear_all = function(RestClass, callback, fallback) {
-  console.log('clear_all');
-  callback();
+  $.ajax({
+    url: RestClass.resource,
+    type: 'DELETE',
+    cache: false,
+    success: function() {
+      callback && callback();
+    },
+    error: function(){
+      fallback && fallback();
+    }
+  });
 };
 
 

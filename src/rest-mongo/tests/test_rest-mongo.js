@@ -99,6 +99,7 @@ exports.tests = [
 ['Index on RestClass', 4, function() {
   // Create a few objects, and try to get it back with index
   // using offset, limit and search params
+  // TODO: offset and limit
   var p1 = new R.Person({firstname: 'Pierre'});
   var p2 = new R.Person({firstname: 'Ori'});
   R.Person.index({}, function(data) {
