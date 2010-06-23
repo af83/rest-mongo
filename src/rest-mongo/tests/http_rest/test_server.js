@@ -82,6 +82,19 @@ exports.tests = [
 }],
 
 
+['Index on Person with query', 3, function() {
+  var request = client.request('GET', '/people?firstname=Pierre', {});
+  request.addListener('response', function(response) {
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(response.headers, expected_header_json);
+    rest_server.get_body_json(response, function(data) {
+      assert.deepEqual(data, [DATA.p1.json()]);
+    });
+  });
+  request.end();
+}],
+
+
 ['Index on Animals (no data)', 3, function() {
   var request = client.request('GET', '/animals', {});
   request.addListener('response', function(response) {

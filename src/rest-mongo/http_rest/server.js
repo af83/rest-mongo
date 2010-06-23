@@ -74,9 +74,9 @@ exports.plug = function(server, schema, RFactory) {
     routing.push([new RegExp('^' + resource + '$'), {
 
       // Index
-      'GET': function(response) {
+      'GET': function(response, _, data) {
         var R = RFactory();
-        R[class_name].index(function(objects) {
+        R[class_name].index({query: data}, function(objects) {
           send_objects(objects, response);
         });
       },
@@ -163,7 +163,7 @@ exports.plug = function(server, schema, RFactory) {
   });
 
   server.addListener('request', function(request, response) {
-    var url = URL.parse(request.url);
+    var url = URL.parse(request.url, true);
     var method = request.method; // TODO: lookup for fake delete / update ...
 
     debug(method + ':' + url.pathname);
@@ -181,9 +181,11 @@ exports.plug = function(server, schema, RFactory) {
           get_body_json(request, function(data) {
             action(response, match, data);
           });
-          return;
         }
-        return action(response, match);
+        else {
+          action(response, match, url.query);
+        }
+        return;
       }
     }
   });
