@@ -1,5 +1,5 @@
 
-require.paths.unshift(__dirname + "/../vendor/node-mongodb-native/lib")
+require.paths.unshift(__dirname + "/../../vendor/node-mongodb-native/lib")
 
 var debug = require('nodetk/logging').debug;
 var utils = require('nodetk/utils');
