@@ -117,6 +117,28 @@ exports.tests = [
 }],
 
 
+['Index on RestClass with sort / limit', 3,function() {
+  var p1 = new R.Person({firstname: 'Pierre'});
+  var p2 = new R.Person({firstname: 'Ori'});
+  var p3 = new R.Person({firstname: 'Louis'});
+  R.save([p1, p2, p3], function() {
+    // sort:
+    var sorting = [['firstname', 'descending']];
+    R.Person.index({query: {_sort: sorting}}, function(data) {
+      assert.deepEqual(data, [p1, p2, p3]);
+    });
+    // limit:
+    R.Person.index({query: {_limit: 2, _sort: sorting}}, function(data) {
+      assert.deepEqual(data, [p1, p2]);
+    });
+    // another limit:
+    R.Person.index({query: {_limit: 1, _sort: sorting}}, function(data) {
+      assert.deepEqual(data, [p1]);
+    });
+  });
+}],
+
+
 ['Delete obj', 2, function() {
   // Delete a particular object
   var p1 = new R.Person({firstname: 'Pierre'});

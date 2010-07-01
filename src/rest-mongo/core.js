@@ -63,7 +63,7 @@ var index = function(args, callback, fallback) {
    *  - fallback(err): function to be called in case of error
    * 
    * */
-  var query = args.query;
+  var query = args.query || {};
 
   var RestClass = args.RestClass;
   var cache = args.session.cache;

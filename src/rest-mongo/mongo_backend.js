@@ -129,8 +129,16 @@ var get_backend = exports.get_backend = function(params) {
 }
 
 
+var index_options = require('rest-mongo/backend_interface').index_options;
 var index = exports.index = function(collection, query, callback, fallback) {
-  collection.find(query, {sort: [['_id', 'descending']]}, function(err, cursor) {
+  var options = {sort: [['_id', 'descending']]};
+  index_options.forEach(function(option) {
+    if (query[option] != undefined) {
+      options[option.slice(1)] = query[option];
+      delete query[option];
+    }
+  });
+  collection.find(query, options, function(err, cursor) {
     if(err != null) return fallback(err);
     else cursor.toArray(function(err, objects) {
       if(err != null) return fallback(err);

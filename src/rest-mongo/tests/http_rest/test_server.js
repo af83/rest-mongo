@@ -4,6 +4,7 @@ require.paths.unshift(__dirname + '/../../../');
 
 var http = require("http"),
     sys = require("sys"),
+    querystring = require("querystring"),
 
     CLB = require("nodetk/orchestration/callbacks");
     assert = require("nodetk/testing/custom_assert");
@@ -83,7 +84,9 @@ exports.tests = [
 
 
 ['Index on Person with query', 3, function() {
-  var request = client.request('GET', '/people?firstname=Pierre', {});
+  var query = JSON.stringify({firstname: "Pierre"});
+  var query_str = querystring.stringify({query: query}); 
+  var request = client.request('GET', '/people?' + query_str, {});
   request.addListener('response', function(response) {
     assert.equal(response.statusCode, 200);
     assert.deepEqual(response.headers, expected_header_json);
@@ -97,7 +100,9 @@ exports.tests = [
 
 ['Index on Person with query and irrelevant data', 3, function() {
   // data not appearing in schema is not used for query
-  var request = client.request('GET', '/people?firstname=Pierre&_=2344', {});
+  var query = JSON.stringify({firstname: "Pierre"});
+  var query_str = querystring.stringify({query: query, _:2344}); 
+  var request = client.request('GET', '/people?' + query_str, {});
   request.addListener('response', function(response) {
     assert.equal(response.statusCode, 200);
     assert.deepEqual(response.headers, expected_header_json);
@@ -117,6 +122,16 @@ exports.tests = [
     rest_server.get_body_json(response, function(data) {
       assert.deepEqual(data, []);
     });
+  });
+  request.end();
+}],
+
+
+['Index with malformed query', 1, function() {
+  query_str = querystring.stringify({query: ''});
+  var request = client.request('GET', '/people?' + query_str, {});
+  request.addListener('response', function(response) {
+    assert.equal(response.statusCode, 400);
   });
   request.end();
 }],

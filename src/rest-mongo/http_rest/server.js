@@ -4,6 +4,12 @@ var sys = require('sys');
 var rest_mongo = require('rest-mongo/core');
 var utils = require('nodetk/utils');
 var debug = require('nodetk/logging').debug;
+//debug.on();
+
+var index_options = {};
+require('rest-mongo/backend_interface').index_options.forEach(function(option) {
+  index_options[option] = true;
+});
 
 var head_ok = {
   'Transfer-Encoding': 'chunked',
@@ -76,11 +82,20 @@ exports.plug = function(server, schema, RFactory) {
       // Index
       'GET': function(response, _, data) {
         var R = RFactory();
+        var u_query = {}; 
+        if (data && data.query != undefined) try {
+          u_query = JSON.parse(data.query);
+        } catch(e) {
+          response.writeHead(400);
+          response.end();
+        }
         var query = {};
-        debug("query", data);
-        debug(schema);
-        for(var criteria in data) if (criteria in schema.properties) {
-          query[criteria] = data[criteria];
+        //debug(schema);
+        debug(u_query);
+        for(var criteria in u_query) { 
+          if (criteria in schema.properties || criteria in index_options) {
+            query[criteria] = u_query[criteria];
+          }
         }
         R[class_name].index({query: query}, function(objects) {
           send_objects(objects, response);

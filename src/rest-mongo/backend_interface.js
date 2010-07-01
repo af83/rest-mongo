@@ -13,7 +13,7 @@ exports.init = not_implemented;
  * 
  */
 
-
+exports.index_options = ['_sort', '_limit'];
 exports.index = not_implemented;
 /* index(Restclass, query, callback, fallback)
  * Get a list of objects corresponding to the given query.
@@ -24,6 +24,14 @@ exports.index = not_implemented;
  * NOTE:
  *  The returned objects must all have the property id, 
  *  being either a string or a int.
+ *
+ * Arguments:
+ *  - RestClass: RestClass object describing the objects we want.
+ *  - query: JSON object containing the query. Always defined, default to {}.
+ *      Special properties of the query object:
+ *        - _sort: list of sorting parameters, ex:
+ *            [['firstname', 'ascending'], ...]
+ *        - _limit: limit the number of returned results.
  *
  */
 

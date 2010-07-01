@@ -18,7 +18,8 @@ var ajax = function(type, url, query, callback, fallback) {
 
 var backend = {
   index: function(RestClass, query, callback, fallback) {
-    ajax('GET', RestClass.resource, query, callback, fallback);
+    var query2 = {query: JSON.stringify(query)};
+    ajax('GET', RestClass.resource, query2, callback, fallback);
   },
 
   gets: function(RestClass, ids, callback, fallback) {
