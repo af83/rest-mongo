@@ -98,8 +98,6 @@ exports.tests = [
 
 ['Index on RestClass', 4, function() {
   // Create a few objects, and try to get it back with index
-  // using offset, limit and search params
-  // TODO: offset and limit
   var p1 = new R.Person({firstname: 'Pierre'});
   var p2 = new R.Person({firstname: 'Ori'});
   R.Person.index({}, function(data) {
@@ -117,7 +115,7 @@ exports.tests = [
 }],
 
 
-['Index on RestClass with sort / limit', 3,function() {
+['Index on RestClass with sort / limit / skip', 5,function() {
   var p1 = new R.Person({firstname: 'Pierre'});
   var p2 = new R.Person({firstname: 'Ori'});
   var p3 = new R.Person({firstname: 'Louis'});
@@ -134,6 +132,14 @@ exports.tests = [
     // another limit:
     R.Person.index({query: {_limit: 1, _sort: sorting}}, function(data) {
       assert.deepEqual(data, [p1]);
+    });
+    // offset (skip):
+    R.Person.index({query: {_skip: 2, _sort: sorting}}, function(data) {
+      assert.deepEqual(data, [p3]);
+    });
+    // limit + skip:
+    R.Person.index({query: {_skip: 1, _limit: 1, _sort: sorting}}, function(data) {
+      assert.deepEqual(data, [p2]);
     });
   });
 }],

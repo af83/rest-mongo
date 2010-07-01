@@ -13,7 +13,7 @@ exports.init = not_implemented;
  * 
  */
 
-exports.index_options = ['_sort', '_limit'];
+exports.index_options = ['_sort', '_limit', '_skip'];
 exports.index = not_implemented;
 /* index(Restclass, query, callback, fallback)
  * Get a list of objects corresponding to the given query.
@@ -32,6 +32,7 @@ exports.index = not_implemented;
  *        - _sort: list of sorting parameters, ex:
  *            [['firstname', 'ascending'], ...]
  *        - _limit: limit the number of returned results.
+ *        - _skip: skip the n first items of the results.
  *
  */
 
