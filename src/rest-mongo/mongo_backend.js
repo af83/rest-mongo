@@ -120,6 +120,7 @@ var get_backend = exports.get_backend = function(params) {
 
   return {
     index: collection_wrapper(collector, index, 3),
+    distinct: collection_wrapper(collector, distinct, 4),
     gets: collection_wrapper(collector, gets, 3),
     update: collection_wrapper(collector, update, 4),
     delete_: collection_wrapper(collector, delete_, 3),
@@ -145,6 +146,14 @@ var index = exports.index = function(collection, query, callback, fallback) {
       objects.forEach(bsonid_to_stringid);
       callback(objects);
     });
+  });
+};
+
+var distinct = exports.distinct = function(collection, key, query, callback, fallback) {
+  debug("distinct on " +  key);
+  collection.distinct(key, query, function(err, values) {
+    if(err != null) return fallback(err);
+    callback(values);
   });
 };
 

@@ -21,6 +21,10 @@ var backend = {
     var query2 = {query: JSON.stringify(query)};
     ajax('GET', RestClass.resource, query2, callback, fallback);
   },
+ 
+  distinct: function(RestClass, key, query, callback, fallback) {
+    fallback(new Error('Not implemented'));
+  },
 
   gets: function(RestClass, ids, callback, fallback) {
     ajax('GET', RestClass.resource + '/' + ids.join(','), {}, function(data) {

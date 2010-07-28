@@ -38,6 +38,7 @@ var delegate = function(obj, args_sups, delegation_table) {
 // ----------------------
 /* The following functions:
  *    - index
+ *    - distinct
  *    - get
  *    - update
  *    - delete_
@@ -80,6 +81,27 @@ var index = function(args, callback, fallback) {
   });
 };
 
+var distinct = function(args, callback, fallback) {
+  /* Get Array of values corresponding to given distinct query on object type.
+   *
+   * Arguments:
+   *  - args:
+   *    - key: what distincts values to we want
+   *    - query: mongo query, default to {}
+   *  - callback(values): function to be called with result
+   *  - fallback(err): function to be called in case of error
+   *
+   * */
+  var query = args.query || {}
+    , key = args.key
+    ;
+  if(!key) return fallback(new Error('You should provide a key!'));
+  args.backend.distinct(args.RestClass, key, query, callback, function(err) {
+    debug("\nError while distinct:", error.message);
+    debug(error.stack);
+    fallback && fallback(err);
+  });
+};
 
 var get = function(args, callback, fallback) {
   /* Get object(s) of RestClass having the requested id(s).
@@ -264,6 +286,7 @@ var insert = function(args, callback, fallback) {
   }, function(error) {
     debug("\nError when inserting:", error.message);
     debug(error.stack);
+    fallback && fallback(error);
   });
 };
 
@@ -501,6 +524,7 @@ exports.getRFactory = function(schema, backend) {
         backend: backend
       }, {
         index: index,
+        distinct: distinct,
         get: get,
         update: update,
         delete_: delete_,
