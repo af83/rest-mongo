@@ -150,7 +150,6 @@ var index = exports.index = function(collection, query, callback, fallback) {
 };
 
 var distinct = exports.distinct = function(collection, key, query, callback, fallback) {
-  debug("distinct on " +  key);
   collection.distinct(key, query, function(err, values) {
     if(err != null) return fallback(err);
     callback(values);
