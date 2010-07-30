@@ -96,10 +96,10 @@ var distinct = function(args, callback, fallback) {
     , key = args.key
     ;
   if(!key) return fallback(new Error('You should provide a key!'));
-  args.backend.distinct(args.RestClass, key, query, callback, function(err) {
+  args.backend.distinct(args.RestClass, key, query, callback, function(error) {
     debug("\nError while distinct:", error.message);
     debug(error.stack);
-    fallback && fallback(err);
+    fallback && fallback(error);
   });
 };
 
@@ -259,8 +259,8 @@ var delete_ = function(args, callback, fallback) {
     ids.map(function(id) {delete cache[id]});
     callback && callback();
   }, function(error) {
-    debug("Error while deleting:", err.message);
-    debug(err.stack);
+    debug("Error while deleting:", error.message);
+    debug(error.stack);
     fallback && fallback(error);
   });
 };
