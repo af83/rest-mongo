@@ -145,40 +145,6 @@ exports.tests = [
 }],
 
 
-['Distinct on RestClass, without query', 1, function() {
-  var p1 = new R.Person({firstname: 'Pierre'});
-  var p2 = new R.Person({firstname: 'Ori'});
-  var p3 = new R.Person({firstname: 'Pierre'});
-  R.save([p1, p2, p3], function() {
-    R.Person.distinct({key: 'firstname'}, function(vals) {
-      var expected = ['Pierre', 'Ori'];
-      assert.same_sets(vals, expected);
-    });
-  });
-}],
-
-['Distinct on RestClass, without query', 1, function() {
-  var p1 = new R.Person({firstname: 'Pierre'});
-  var p2 = new R.Person({firstname: 'Ori'});
-  var p3 = new R.Person({firstname: 'Pierre'});
-  var p4 = new R.Person({firstname: 'Albert'});
-  R.save([p1, p2, p3, p4], function() {
-    R.Person.distinct({key: 'firstname', query: {
-      firstname: {'$in': ['Pierre', 'Ori', 'Jean']}
-    }}, function(vals) {
-      var expected = ['Pierre', 'Ori'];
-      assert.same_sets(vals, expected);
-    });
-  });
-}],
-
-['Distinct on RestClass, bad key', 1, function() {
-  R.Person.distinct({key: null}, function(vals) {
-    assert.ok(false, "Should not be called");
-  }, function(err) {
-    assert.ok(err);
-  });
-}],
 
 
 ['Delete obj', 2, function() {
@@ -281,4 +247,45 @@ exports.tests = [
 }],
 
 ];
+
+
+if(!process.browser) exports.tests = exports.tests.concat([
+  // These tests can not run on browser side (not implemented):
+
+['Distinct on RestClass, without query', 1, function() {
+  var p1 = new R.Person({firstname: 'Pierre'});
+  var p2 = new R.Person({firstname: 'Ori'});
+  var p3 = new R.Person({firstname: 'Pierre'});
+  R.save([p1, p2, p3], function() {
+    R.Person.distinct({key: 'firstname'}, function(vals) {
+      var expected = ['Pierre', 'Ori'];
+      assert.same_sets(vals, expected);
+    });
+  });
+}],
+
+['Distinct on RestClass, without query', 1, function() {
+  var p1 = new R.Person({firstname: 'Pierre'});
+  var p2 = new R.Person({firstname: 'Ori'});
+  var p3 = new R.Person({firstname: 'Pierre'});
+  var p4 = new R.Person({firstname: 'Albert'});
+  R.save([p1, p2, p3, p4], function() {
+    R.Person.distinct({key: 'firstname', query: {
+      firstname: {'$in': ['Pierre', 'Ori', 'Jean']}
+    }}, function(vals) {
+      var expected = ['Pierre', 'Ori'];
+      assert.same_sets(vals, expected);
+    });
+  });
+}],
+
+['Distinct on RestClass, bad key', 1, function() {
+  R.Person.distinct({key: null}, function(vals) {
+    assert.ok(false, "Should not be called");
+  }, function(err) {
+    assert.ok(err);
+  });
+}],
+
+]);
 
