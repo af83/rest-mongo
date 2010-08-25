@@ -1,5 +1,4 @@
 
-require.paths.unshift(__dirname + '/../../../../vendor/nodetk/src');
 require.paths.unshift(__dirname + '/../../../');
 
 var http = require("http"),
@@ -22,18 +21,23 @@ var backend = mongo_backend.get_backend({db_name: 'test-rest-mongo'});
     RFactory = rest_mongo.getRFactory(schema, backend);
 
 
-(function() {
+exports.module_init = function(callback) {
   // init some stuff
   server = http.createServer();
   rest_server.plug(server, schema, RFactory);
-  server.listen(8555);
-  // TODO: close the server at the end of the tests.
-  client = http.createClient(8555, '127.0.0.1');
-  client.addListener('error', function(err) {
-    sys.puts(err.message, err.stack);
-  });
-})();
+  server.listen(8555, function() {
+    client = http.createClient(8555, '127.0.0.1');
+    client.addListener('error', function(err) {
+      sys.puts(err.message, err.stack);
+    });
+    callback();
+  })
+};
 
+exports.module_close = function(callback) {
+  server.close();
+  callback();
+};
 
 var DATA = {},
     R;
