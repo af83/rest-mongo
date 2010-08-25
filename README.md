@@ -107,17 +107,17 @@ R.save([p1, p2], function() {
 
 ## Installation
 
-This version needs: 
-
-  * [node-mongodb-native](http://github.com/christkv/node-mongodb-native/) (at the exact version V0.7.1 - V0.7.2 to V0.7.4 are not working)
-  * [mongodb](http://www.mongodb.org/display/DOCS/Downloads) (1.4.2 - The 1.5 serie doesn't seem to work fine yet...)
+This version has been tested on: 
+  * [node](http://nodejs.org/) (v0.2.0)
+  * [node-mongodb-native](http://github.com/christkv/node-mongodb-native/) (v0.8.0)
+  * [mongodb](http://www.mongodb.org/display/DOCS/Downloads) (1.4.2)
   * [nodetk](http://github.com/AF83/nodetk)
 
 node-mongodb-native and nodetk are vendorized through git submodules:
 `$ git submodule update --init`
 
 To run the tests: `nodetests`
-Please have a look at the nodetk README file to instlal nodetk.
+Please have a look at the nodetk README file to install nodetk.
 
 
 
