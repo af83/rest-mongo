@@ -3,7 +3,7 @@ A JS ORM for nodejs and mongo-db
 
 ## Intro
 
-rest-js is a wrapper around node-mongodb-native for easier use of MongoDB from nodejs.
+rest-mongo is a wrapper around node-mongodb-native for easier use of MongoDB from nodejs.
 It provides high level functions to interact with your objects, which are generated from a JSON schema.
 
 ## Examples
@@ -89,6 +89,18 @@ R.Person.update({
   data: {firstname: 'anonymous'}
 }, function() {
   sys.puts("Voldemort cannot find them anymore...");
+});
+</code></pre>
+
+
+### Save more than on field in once:
+<pre><code>
+var p1 = new R.Person({firstname: 'Hermione'});
+var p2 = new R.Person({firstname: 'Ron'});
+R.save([p1, p2], function() {
+  console.log('Now Harry has friends.')
+}, function(error) {
+  console.log('Harry has no friends, because of ', error);
 });
 </code></pre>
 
