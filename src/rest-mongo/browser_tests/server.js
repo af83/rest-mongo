@@ -30,6 +30,8 @@ bserver.serve_modules(server, {
   additional_files: {
     '/tests.html': __dirname + '/tests.html',
     '/tests.js': __dirname + '/tests.js',
+    '/demo.html': __dirname + '/demo.html',
+    '/demo.js': __dirname + '/demo.js',
     '/jquery.js': __dirname + '/jquery-1.4.2.min.js',
   }
 });
