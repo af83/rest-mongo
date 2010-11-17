@@ -2,7 +2,6 @@ require.paths.unshift(__dirname + '/../../');
 
 var rest_mongo = require("rest-mongo/core");
 
-var sys = require("sys");
 var assert = require("nodetk/testing/custom_assert");
 var debug = require('nodetk/logging').debug;
 var utils = require('nodetk/utils');
@@ -47,7 +46,7 @@ exports.tests = [
     assert.ok(Boolean(p.id));
 
     R.Person.get({ids: p.id}, function(data) {
-      //sys.debug('Person back from db: ' + JSON.stringify(data));
+      //console.log('Person back from db: ' + JSON.stringify(data));
       // TODO: check defaults are correctly sets, and eventual validation is done .
       assert.equal(data.firstname, 'Pierre');
     });

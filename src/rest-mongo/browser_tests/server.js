@@ -4,11 +4,20 @@ require.paths.unshift(__dirname + '/../../');
 
 
 var http = require("http"),
-    sys = require("sys"),
-
-    bserver = require('nodetk/browser/server');
+    bserver = require('nodetk/browser/server'),
     rest_server = require('rest-mongo/http_rest/server');
 
+serve_modules_connector = bserver.serve_modules_connector({
+  modules: ['assert', 'util'],
+  packages: ['nodetk', 'rest-mongo'],
+  additional_files: {
+    '/tests.html': __dirname + '/tests.html',
+    '/tests.js': __dirname + '/tests.js',
+    '/demo.html': __dirname + '/demo.html',
+    '/demo.js': __dirname + '/demo.js',
+    '/jquery.js': __dirname + '/jquery-1.4.2.min.js',
+  }
+});
 
 var rest_mongo = require('rest-mongo/core');
 var mongo_backend = require('rest-mongo/mongo_backend');
@@ -21,24 +30,14 @@ rest_server_connector = rest_server.connector(RFactory, schema);
 
 
 var server = http.createServer(function(req, res) {
-  rest_server_connector(req, res, function(){});
-});
-
-bserver.serve_modules(server, {
-  modules: ['assert', 'sys'],
-  packages: ['nodetk', 'rest-mongo'],
-  additional_files: {
-    '/tests.html': __dirname + '/tests.html',
-    '/tests.js': __dirname + '/tests.js',
-    '/demo.html': __dirname + '/demo.html',
-    '/demo.js': __dirname + '/demo.js',
-    '/jquery.js': __dirname + '/jquery-1.4.2.min.js',
-  }
+  serve_modules_connector(req, res, function() {
+    rest_server_connector(req, res, function(){});
+  });
 });
 
 
-server.listen(8549);
-sys.puts('Server listning...' +
-         '\nGo on http://localhost:8549/tests.html to run browsers tests.');
-
+server.listen(8549, function() {
+  console.log('Server listning...' +
+              '\nGo on http://localhost:8549/tests.html to run browsers tests.');
+});
 

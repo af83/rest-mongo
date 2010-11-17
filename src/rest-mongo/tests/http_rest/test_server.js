@@ -2,7 +2,6 @@
 require.paths.unshift(__dirname + '/../../../');
 
 var http = require("http"),
-    sys = require("sys"),
     querystring = require("querystring"),
 
     CLB = require("nodetk/orchestration/callbacks"),
@@ -36,7 +35,7 @@ exports.module_init = function(callback) {
   server.listen(8555, function() {
     client = http.createClient(8555, '127.0.0.1');
     client.addListener('error', function(err) {
-      sys.puts(err.message, err.stack);
+      console.log(err.message, err.stack);
     });
     callback();
   })

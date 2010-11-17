@@ -1,5 +1,4 @@
 var URL = require('url');
-var sys = require('sys');
 
 var rest_mongo = require('rest-mongo/core');
 var utils = require('nodetk/utils');
@@ -200,7 +199,7 @@ exports.connector = function(RFactory, schema) {
           match;
       try {
         match = url.pathname.match(route);
-      } catch(e) {sys.puts('error: ' + e);};
+      } catch(e) {console.log('error: ' + e);};
       if(match && action) {
         var data;
         if({'POST': true, 'PUT': true}[request.method]) {
