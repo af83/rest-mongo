@@ -5,8 +5,8 @@ var http = require("http"),
     sys = require("sys"),
     querystring = require("querystring"),
 
-    CLB = require("nodetk/orchestration/callbacks");
-    assert = require("nodetk/testing/custom_assert");
+    CLB = require("nodetk/orchestration/callbacks"),
+    assert = require("nodetk/testing/custom_assert"),
 
     rest_server = require('rest-mongo/http_rest/server'),
     rest_mongo = require('rest-mongo/core'),
@@ -23,8 +23,16 @@ var backend = mongo_backend.get_backend({db_name: 'test-rest-mongo'});
 
 exports.module_init = function(callback) {
   // init some stuff
-  server = http.createServer();
-  rest_server.plug(server, schema, RFactory);
+  var connector = rest_server.connector(RFactory, schema);
+  var next = function(req, res) {
+    res.writeHead(404, {});
+    res.end('next() called.');
+  };
+  server = http.createServer(function(req, resp) {
+    connector(req, resp, function() {
+      next(req, resp);
+    });
+  });
   server.listen(8555, function() {
     client = http.createClient(8555, '127.0.0.1');
     client.addListener('error', function(err) {
@@ -67,6 +75,21 @@ var expected_header_json = {
 
 exports.tests = [
 
+['uncatched request', 6, function() {
+  // A request not related to the schema should go to next.
+  ['/toto', '/titi'].forEach(function(url) {
+    var request = client.request('GET', url, {});
+    request.addListener('response', function(response) {
+      assert.equal(response.statusCode, 404);
+      assert.deepEqual(response.headers, 
+                       {"connection":"close","transfer-encoding":"chunked"});
+      rest_server.get_body(response, function(body) {
+        assert.equal(body, 'next() called.');
+      });
+    });
+    request.end();
+  });
+}],
 
 ['Index on Person', 3, function() {
   var request = client.request('GET', '/people', {});

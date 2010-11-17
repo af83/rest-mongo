@@ -10,7 +10,20 @@ var http = require("http"),
     rest_server = require('rest-mongo/http_rest/server');
 
 
-var server = http.createServer();
+var rest_mongo = require('rest-mongo/core');
+var mongo_backend = require('rest-mongo/mongo_backend');
+var backend = mongo_backend.get_backend({db_name: 'test-rest-mongo'});
+
+
+var schema = require('rest-mongo/tests/schema').schema;
+var RFactory = rest_mongo.getRFactory(schema, backend);
+rest_server_connector = rest_server.connector(RFactory, schema);
+
+
+var server = http.createServer(function(req, res) {
+  rest_server_connector(req, res, function(){});
+});
+
 bserver.serve_modules(server, {
   modules: ['assert', 'sys'],
   packages: ['nodetk', 'rest-mongo'],
@@ -20,15 +33,6 @@ bserver.serve_modules(server, {
     '/jquery.js': __dirname + '/jquery-1.4.2.min.js',
   }
 });
-
-
-var rest_mongo = require('rest-mongo/core');
-var mongo_backend = require('rest-mongo/mongo_backend');
-var backend = mongo_backend.get_backend({db_name: 'test-rest-mongo'});
-
-var schema = require('rest-mongo/tests/schema').schema;
-var RFactory = rest_mongo.getRFactory(schema, backend);
-rest_server.plug(server, schema, RFactory);
 
 
 server.listen(8549);

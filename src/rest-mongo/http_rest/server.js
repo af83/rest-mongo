@@ -44,19 +44,25 @@ var send_object = function(obj, response) {
 
 
 // TODO: move this out of here?
-var get_body_json = exports.get_body_json = function(request, callback) {
+var get_body = exports.get_body = function(request, callback) {
   var body = '';
   request.addListener('data', function(chunk) {
     body += chunk;
   });
   request.addListener('end', function() {
+    callback(body);
+  });
+};
+
+var get_body_json = exports.get_body_json = function(request, callback) {
+  get_body(request, function(body) {
     callback(JSON.parse(body));
   });
 };
 
 
-exports.plug = function(server, schema, RFactory) {
-  /** Plug the HTTP Rest server to existing http server.
+exports.connector = function(RFactory, schema) {
+  /** Returns a connect composant answering REST API calls.
    */
   var routing = [];
   /*
@@ -183,12 +189,11 @@ exports.plug = function(server, schema, RFactory) {
 
   });
 
-  server.addListener('request', function(request, response) {
+  return function(request, response, next) {
     var url = URL.parse(request.url, true);
     var method = request.method; // TODO: lookup for fake delete / update ...
 
     debug(method + ':' + url.pathname);
-
     for(var i=0; i<routing.length; i++) {
       var route = routing[i][0],
           action = routing[i][1][method],
@@ -209,7 +214,8 @@ exports.plug = function(server, schema, RFactory) {
         return;
       }
     }
-  });
+    next();
+  };
 
 };
 
