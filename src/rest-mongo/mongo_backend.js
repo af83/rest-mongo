@@ -125,9 +125,10 @@ var get_backend = exports.get_backend = function(params) {
     update: collection_wrapper(collector, update, 4),
     delete_: collection_wrapper(collector, delete_, 3),
     insert: collection_wrapper(collector, insert, 3),
-    clear_all: collection_wrapper(collector, clear_all, 2)
+    clear_all: collection_wrapper(collector, clear_all, 2),
+    db: db
   }
-}
+};
 
 
 var index_options = require('rest-mongo/backend_interface').index_options;
@@ -186,12 +187,12 @@ var delete_ = exports.delete_ = function(collection, ids, callback, fallback) {
   collection.remove({_id: {'$in': ids}}, function(err, _) {
     if(err != null) return fallback && fallback(err);
     callback && callback();
-  }, fallback);
+  });
 };
 
 
 var insert = exports.insert = function(collection, json_obj, callback, fallback) {
-  collection.insert(json_obj, function(error, objects) {
+  collection.insert(json_obj, {safe: true}, function(error, objects) {
     if(error != null) return fallback && fallback(error);
     objects.forEach(bsonid_to_stringid);
     callback && callback(objects[0]);
@@ -202,7 +203,7 @@ var insert = exports.insert = function(collection, json_obj, callback, fallback)
 var clear_all = exports.clear_all = function(collection, callback, fallback) {
   collection.remove({}, function(err, _) {
     if(err != null) return fallback && fallback(err);
-    callback && callback();
-  }, fallback);
+    else callback && callback();
+  });
 };
 
