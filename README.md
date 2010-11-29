@@ -124,7 +124,7 @@ server = http.createServer(function(req, resp) {
 server.listen(8888);
 </code></pre>
 
-If is now possible to get the list of Person objects doing a GET HTTP request on localhost:8080/people
+If is now possible to get the list of Person objects doing a GET HTTP request on localhost:8888/people
 
 
 ### Authorization
