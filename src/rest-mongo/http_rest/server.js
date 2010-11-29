@@ -68,7 +68,7 @@ exports.connector = function(RFactory, schema, auth_check) {
    *  - schema
    *  - auth_check: optional, function to be called in case you want to ensure
    *    authentication / authorization before serving any resource:
-   *      auth_check(info, req, res, ok_callback)
+   *      auth_check(req, res, next, info)
    *        - req: nodejs req obj.
    *        - res: nodejs res obj.
    *        - next: to be called if ok to continue serving the request.
