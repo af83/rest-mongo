@@ -60,8 +60,20 @@ var get_body_json = exports.get_body_json = function(request, callback) {
 };
 
 
-exports.connector = function(RFactory, schema) {
+exports.connector = function(RFactory, schema, auth_check) {
   /** Returns a connect composant answering REST API calls.
+   *
+   * Arguments:
+   *  - RFactory
+   *  - schema
+   *  - auth_check: optional, function to be called in case you want to ensure
+   *    authentication / authorization before serving any resource:
+   *      auth_check(info, req, res, ok_callback)
+   *        - req: nodejs req obj.
+   *        - res: nodejs res obj.
+   *        - next: to be called if ok to continue serving the request.
+   *        - info: hash containing 'pathname', 'method', and 'data' attrs.
+   *
    */
   var routing = [];
   /*
@@ -191,6 +203,7 @@ exports.connector = function(RFactory, schema) {
   return function(request, response, next) {
     var url = URL.parse(request.url, true);
     var method = request.method; // TODO: lookup for fake delete / update ...
+    var info = {};
 
     debug(method + ':' + url.pathname);
     for(var i=0; i<routing.length; i++) {
@@ -201,14 +214,25 @@ exports.connector = function(RFactory, schema) {
         match = url.pathname.match(route);
       } catch(e) {console.log('error: ' + e);};
       if(match && action) {
+        var info = {pathname:url.pathname, method: method}
         var data;
         if({'POST': true, 'PUT': true}[request.method]) {
           get_body_json(request, function(data) {
-            action(response, match, data);
+            info.data = data;
+            var next = function() {
+              action(response, match, data);
+            };
+            if(auth_check) auth_check(request, response, next, info);
+            else next();
           });
         }
         else {
-          action(response, match, url.query);
+          info.data = url.query;
+          var next = function() {
+            action(response, match, url.query);
+          };
+          if(auth_check) auth_check(request, response, next, info);
+          else next();
         }
         return;
       }

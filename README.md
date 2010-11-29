@@ -1,10 +1,13 @@
 # rest-mongo
-A JS ORM for nodejs and mongo-db
+A JS ORM for nodejs / mongo-db and/or the browser.
 
 ## Intro
 
-rest-mongo is a wrapper around node-mongodb-native for easier use of MongoDB from nodejs.
-It provides high level functions to interact with your objects, which are generated from a JSON schema.
+RestMongo works by letting you describe your data using a JSON schema and then 
+provides you high level objects which can be created / updated / deleted /
+retrieved using an easy-to-use API.
+The core functionalities work on both node and the browser. There are different 
+backends, wether you want to plug to a mongodb, a REST API, etc.
 
 ## Examples
 
@@ -12,6 +15,7 @@ It provides high level functions to interact with your objects, which are genera
 <pre><code>
 var schema = {
   "Person": {
+    resource: '/people',
     schema: {
       id: "Person",
       description: "someone, blablabla",
@@ -104,13 +108,46 @@ R.save([p1, p2], function() {
 });
 </code></pre>
 
+## Connect middleware
+
+rest-mongo also provides you with a connect middleware which can serve your data over
+a REST API using the provided schema.
+
+### Starting a REST server on the port 8888
+<pre><code>
+var connector = rest_server.connector(RFactory, schema);
+server = http.createServer(function(req, resp) {
+  connector(req, resp, function() {
+    res.writeHead(404, {}); res.end();
+  });
+});
+server.listen(8888);
+</code></pre>
+
+If is now possible to get the list of Person objects doing a GET HTTP request on localhost:8080/people
+
+
+### Authorization
+It is possible to specify a third argument auth_check when calling the connector 
+function.
+This argument should be a function. If provided, it will be called to check
+if rest-mongo can reply to the request or not. The function signature is:
+
+  auth_check(req, res, next, info)
+
+  - req: nodejs req obj.
+  - res: nodejs res obj.
+  - next: to be called if ok to continue serving the request.
+  - info: hash containing 'pathname', 'method', and 'data' attrs.
+
+
 
 ## Installation
 
 This version has been tested on: 
 
-  * [node](http://nodejs.org/) (v0.2.0)
-  * [node-mongodb-native](http://github.com/christkv/node-mongodb-native/) (v0.8.0)
+  * [node](http://nodejs.org/) (v0.3.0)
+  * [node-mongodb-native](http://github.com/christkv/node-mongodb-native/)
   * [mongodb](http://www.mongodb.org/display/DOCS/Downloads) (1.6.1 and 1.4.2)
   * [nodetk](http://github.com/AF83/nodetk)
 
