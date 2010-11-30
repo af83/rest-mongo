@@ -31,7 +31,7 @@ var stringify = function(data) {
 
 var backend = {
   index: function(RestClass, query, callback, fallback) {
-    var query2 = {query: stringify(query)};
+    var query2 = {query: JSON.stringify(query)};
     ajax('GET', RestClass.resource, query2, callback, fallback);
   },
  
