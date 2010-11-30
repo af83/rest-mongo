@@ -1,6 +1,11 @@
 
+var additional_params;
 
 var ajax = function(type, url, query, callback, fallback) {
+  if(typeof query == 'object') {
+    // if query is a string, the additional params have already been added.
+    query = $.extend({}, query, additional_params);
+  }
   $.ajax({
     url: url,
     type: type,
@@ -16,9 +21,17 @@ var ajax = function(type, url, query, callback, fallback) {
   });
 };
 
+var stringify = function(data) {
+  /* A function to stringify data.
+   * Will add additional parameters
+   */
+  var data2 =  $.extend({}, data, additional_params);
+  return JSON.stringify(data2);
+};
+
 var backend = {
   index: function(RestClass, query, callback, fallback) {
-    var query2 = {query: JSON.stringify(query)};
+    var query2 = {query: stringify(query)};
     ajax('GET', RestClass.resource, query2, callback, fallback);
   },
  
@@ -37,7 +50,7 @@ var backend = {
   },
 
   update: function(RestClass, ids, data, callback, fallback) {
-    ajax('PUT', RestClass.resource + '/' + ids.join(','), JSON.stringify(data),
+    ajax('PUT', RestClass.resource + '/' + ids.join(','), stringify(data),
          callback, fallback);
   },
 
@@ -47,7 +60,7 @@ var backend = {
   },
 
   insert: function(RestClass, obj, callback, fallback) {
-    ajax('POST', RestClass.resource, JSON.stringify(obj), callback, fallback);
+    ajax('POST', RestClass.resource, stringify(obj), callback, fallback);
   },
 
   clear_all: function(RestClass, callback, fallback) {
@@ -56,7 +69,9 @@ var backend = {
 };
 
 
-exports.get_backend = function() {
+exports.get_backend = function(options) {
+  options = options || {};
+  additional_params = options.additional_params || {};
   return backend;
 };
 
