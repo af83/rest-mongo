@@ -66,7 +66,7 @@ var expected_header = {
 };
 
 var expected_header_json = {
-  'content-type': 'application/json',
+  'content-type': 'application/json; charset=utf-8',
   'transfer-encoding': 'chunked',
   "connection": "close"
 };

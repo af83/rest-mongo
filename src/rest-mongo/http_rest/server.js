@@ -11,8 +11,7 @@ require('rest-mongo/backend_interface').index_options.forEach(function(option) {
 });
 
 var head_ok = {
-  'Transfer-Encoding': 'chunked',
-  'Content-Type': 'application/json'
+  'Content-Type': 'application/json; charset=utf-8'
 };
 
 
