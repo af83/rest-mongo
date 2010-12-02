@@ -29,9 +29,23 @@ var stringify = function(data) {
   return JSON.stringify(data2);
 };
 
+var transform_sort = function(sort_filter) {
+  /* Tranform a _sort query param from:
+   * [["criteria1", "acending"], ["criteria2", "descending"]] 
+   * to:
+   * "criteria1:ascending,criteria2:descending"
+   */
+  var sort = [];
+  sort_filter.forEach(function(filter) {
+    sort.push(filter[0] + ':' + filter[1]);
+  });
+  return sort.join(',');
+};
+
 var backend = {
   index: function(RestClass, query, callback, fallback) {
-    var query2 = {query: JSON.stringify(query)};
+    var query2 = $.extend({}, query);
+    if(query._sort) query2._sort = transform_sort(query._sort);
     ajax('GET', RestClass.resource, query2, callback, fallback);
   },
  

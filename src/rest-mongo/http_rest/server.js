@@ -84,26 +84,46 @@ var Server = function(RFactory, class_name) {
 };
 Server.prototype = {};
 
+var transform_sort = function(val) {
+  /* Tranform a _sort query param from:
+   * "criteria1:ascending,criteria2:descending"
+   * to:
+   * [["criteria1", "acending"], ["criteria2", "descending"]] 
+   *
+   * Returns null if problem in given format.
+   */
+  var new_val = [];
+  sort_filters = val.split(',');
+  sort_filters.forEach(function(sort_filter) {
+    sort_filter = sort_filter.split(':');
+    if(sort_filter.length != 2 || !sort_filter[0] || !sort_filter[1]) return null;
+    new_val.push([sort_filter[0], sort_filter[1]]);
+  });
+  if(new_val.length < 1) return null;
+  return new_val;
+};
+
 Server.prototype.GET = function(response, _, data) {
-  /* GET on /resource where resource correspond to class_name.
+  /* GET on /resource (index).
    */
   var Collection = this.get_collection();
-  var u_query = {}; 
-  if (data && data.query != undefined) try {
-    u_query = JSON.parse(data.query);
-  } catch(e) {
-    response.writeHead(400);
-    response.end();
-  }
   var query = {};
-  debug(u_query);
-  for(var criteria in u_query) { 
+  for(var criteria in data) { 
     if (criteria in Collection.schema.properties || criteria in index_options) {
-      query[criteria] = u_query[criteria];
+      var val = data[criteria];
+      if(criteria == "_sort") val = transform_sort(val);
+      if(val == null) {
+        response.writeHead(400, {}); response.end();
+        return;
+      }
+      query[criteria] = val;
     }
   }
   Collection.index({query: query}, function(objects) {
     send_objects(objects, response);
+  }, function(err) {
+    response.writeHead(500);
+    response.end();
   });
 };
 

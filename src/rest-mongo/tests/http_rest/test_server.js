@@ -110,8 +110,7 @@ exports.tests = [
 
 
 ['Index on Person with query', 3, function() {
-  var query = JSON.stringify({firstname: "Pierre"});
-  var query_str = querystring.stringify({query: query}); 
+  var query_str = querystring.stringify({firstname: "Pierre"}); 
   var request = client.request('GET', '/people?' + query_str, {});
   request.addListener('response', function(response) {
     assert.equal(response.statusCode, 200);
@@ -126,8 +125,7 @@ exports.tests = [
 
 ['Index on Person with query and irrelevant data', 3, function() {
   // data not appearing in schema is not used for query
-  var query = JSON.stringify({firstname: "Pierre"});
-  var query_str = querystring.stringify({query: query, _:2344}); 
+  var query_str = querystring.stringify({firstname: "Pierre", _:2344}); 
   var request = client.request('GET', '/people?' + query_str, {});
   request.addListener('response', function(response) {
     assert.equal(response.statusCode, 200);
@@ -154,8 +152,7 @@ exports.tests = [
 
 
 ['Index with malformed query', 1, function() {
-  query_str = querystring.stringify({query: ''});
-  var request = client.request('GET', '/people?' + query_str, {});
+  var request = client.request('GET', '/people?_sort=titi', {});
   request.addListener('response', function(response) {
     assert.equal(response.statusCode, 400);
   });
