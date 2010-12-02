@@ -60,19 +60,15 @@ var get_body_json = exports.get_body_json = function(request, callback) {
 
 // --------------------------------------------------------------
 
-var Server = function(RFactory, class_name, schema) {
+var Server = function(RFactory, class_name) {
   /* Class to hold context info about a particular resource.
    *
    * Arguments:
    *  - RFactory: R factory function to user at each request.
    *  - class_name: the class name of the resource to serve.
-   *  - schema: the schema corresponding to the resource.
    *
    */
   var self = this;
-  this.RFactory = RFactory;
-  this.class_name = class_name;
-  this.schema = schema;
   var proto = Server.prototype;
   // Here we make the functions "bindable":
   // we can call them directly, will be called on the this (Server) object.
@@ -81,13 +77,17 @@ var Server = function(RFactory, class_name, schema) {
       fct.apply(self, arguments);
     };
   })(fct_name, proto[fct_name]);
+  this.get_collection = function() {
+    var R = RFactory();
+    return R[class_name];
+  };
 };
 Server.prototype = {};
 
 Server.prototype.GET = function(response, _, data) {
   /* GET on /resource where resource correspond to class_name.
    */
-  var R = this.RFactory();
+  var Collection = this.get_collection();
   var u_query = {}; 
   if (data && data.query != undefined) try {
     u_query = JSON.parse(data.query);
@@ -98,19 +98,19 @@ Server.prototype.GET = function(response, _, data) {
   var query = {};
   debug(u_query);
   for(var criteria in u_query) { 
-    if (criteria in this.schema.properties || criteria in index_options) {
+    if (criteria in Collection.schema.properties || criteria in index_options) {
       query[criteria] = u_query[criteria];
     }
   }
-  R[this.class_name].index({query: query}, function(objects) {
+  Collection.index({query: query}, function(objects) {
     send_objects(objects, response);
   });
 };
 
 Server.prototype.POST = function(response, _, data) {
   // TODO: check data more carefully (handle mandatory stuff)
-  var R = this.RFactory();
-  obj = new R[this.class_name](data);
+  var Collection = this.get_collection();
+  var obj = new Collection(data);
   obj.save(function() {
     response.writeHead(201);
     response.write(JSON.stringify(obj.json()));
@@ -119,8 +119,8 @@ Server.prototype.POST = function(response, _, data) {
 };
 
 Server.prototype.DELETE_ = function(response) {
-  var R = this.RFactory();
-  R[this.class_name].clear_all(function() {
+  var Collection = this.get_collection();
+  Collection.clear_all(function() {
      response.writeHead(200);
      response.end();
   }, function(error) {
@@ -131,8 +131,8 @@ Server.prototype.DELETE_ = function(response) {
 
 Server.prototype.GETs = function(response, match) {
   var ids = match[1].split(",");
-  var R = this.RFactory();
-  R[this.class_name].get({ids: ids}, function(objects) {
+  var Collection = this.get_collection();
+  Collection.get({ids: ids}, function(objects) {
     if(ids.length == 1) {
       if(objects) return send_object(objects, response);
       response.writeHead(404);
@@ -150,8 +150,8 @@ Server.prototype.GETs = function(response, match) {
 
 Server.prototype.PUT = function(response, match, data) {
   var ids = match[1].split(",");
-  var R = this.RFactory();
-  R[this.class_name].update({ids: ids, data: data}, function(objects) {
+  var Collection = this.get_collection();
+  Collection.update({ids: ids, data: data}, function(objects) {
     response.writeHead(200);
     response.end();
   }, function(error) {
@@ -162,8 +162,8 @@ Server.prototype.PUT = function(response, match, data) {
 
 Server.prototype.DELETEs = function(response, match) {
   var ids = match[1].split(",");
-  var R = this.RFactory();
-  R[this.class_name].delete_({ids: ids}, function() {
+  var Collection = this.get_collection();
+  Collection.delete_({ids: ids}, function() {
     response.writeHead(200);
     response.end();
   }, function(err) {
@@ -204,11 +204,9 @@ exports.connector = function(RFactory, schema, auth_check) {
 
   utils.each(schema, function(class_name, data) {
     var resource = data.resource;
-    var escaped_resource = RegExp.escape(resource);
-    var schema = data.schema;
     var route;
 
-    var server = new Server(RFactory, class_name, schema);
+    var server = new Server(RFactory, class_name);
 
     // GET or POST to /resource (collection)
     routing.push([new RegExp('^' + resource + '$'), 
