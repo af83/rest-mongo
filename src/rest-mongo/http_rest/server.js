@@ -127,7 +127,7 @@ Server.prototype.GET = function(response, _, data) {
   });
 };
 
-Server.prototype.POST = function(response, _, data) {
+Server.prototype.POST = function(response, _, data, eventEmitter) {
   // TODO: check data more carefully (handle mandatory stuff)
   var Collection = this.get_collection();
   var obj = new Collection(data);
@@ -135,14 +135,21 @@ Server.prototype.POST = function(response, _, data) {
     response.writeHead(201);
     response.write(JSON.stringify(obj.json()));
     response.end();
+    if(eventEmitter)
+       eventEmitter.emit('CREATE:' + Collection.schema.id, obj);
+  }, function(error) {
+    response.writeHead(500);
+    response.end();
   });
 };
 
-Server.prototype.DELETE_ = function(response) {
+Server.prototype.DELETE_ = function(response, match, data, eventEmitter) {
   var Collection = this.get_collection();
   Collection.clear_all(function() {
      response.writeHead(200);
      response.end();
+     if(eventEmitter)
+       eventEmitter.emit('DELETE_ALL:' + Collection.schema.id);
   }, function(error) {
     response.writeHead(500);
     response.end();
@@ -168,24 +175,28 @@ Server.prototype.GETs = function(response, match) {
   });
 };
 
-Server.prototype.PUT = function(response, match, data) {
+Server.prototype.PUT = function(response, match, data, eventEmitter) {
   var ids = match[1].split(",");
   var Collection = this.get_collection();
   Collection.update({ids: ids, data: data}, function(objects) {
     response.writeHead(200);
     response.end();
+    if(eventEmitter) 
+      eventEmitter.emit('UPDATE:' + Collection.schema.id, ids, data);
   }, function(error) {
     response.writeHead(500);
     response.end();
   });
 };
 
-Server.prototype.DELETEs = function(response, match) {
+Server.prototype.DELETEs = function(response, match, data, eventEmitter) {
   var ids = match[1].split(",");
   var Collection = this.get_collection();
   Collection.delete_({ids: ids}, function() {
     response.writeHead(200);
     response.end();
+    if(eventEmitter)
+      eventEmitter.emit('DELETE:' + Collection.schema.id, ids);
   }, function(err) {
     response.writeHead(500);
     response.end();
@@ -194,21 +205,28 @@ Server.prototype.DELETEs = function(response, match) {
 
 // --------------------------------------------------------------
 
-exports.connector = function(RFactory, schema, auth_check) {
+exports.connector = function(RFactory, schema, options) {
   /** Returns a connect composant answering REST API calls.
    *
    * Arguments:
    *  - RFactory
    *  - schema
-   *  - auth_check: optional, function to be called in case you want to ensure
-   *    authentication / authorization before serving any resource:
-   *      auth_check(req, res, next, info)
-   *        - req: nodejs req obj.
-   *        - res: nodejs res obj.
-   *        - next: to be called if ok to continue serving the request.
-   *        - info: hash containing 'pathname', 'method', and 'data' attrs.
+   *  - options: hash (all optional).
+   *    - auth_check: function to be called in case you want to ensure
+   *      authentication / authorization before serving any resource:
+   *        auth_check(req, res, next, info)
+   *          - req: nodejs req obj.
+   *          - res: nodejs res obj.
+   *          - next: to be called if ok to continue serving the request.
+   *          - info: hash containing 'pathname', 'method', and 'data' attrs.
+   *    - eventEmitter: a node EventEmitter object. If provided, will receive
+   *      events about creation/update/deletion of objects.
    *
    */
+  if(!options) options = {};
+  var auth_check = options.auth_check
+    , eventEmitter = options.eventEmitter  
+    ;
   var routing = [];
   /*
     [
@@ -263,7 +281,7 @@ exports.connector = function(RFactory, schema, auth_check) {
           get_body_json(request, function(data) {
             info.data = data;
             var next = function() {
-              action(response, match, data);
+              action(response, match, data, eventEmitter);
             };
             if(auth_check) auth_check(request, response, next, info);
             else next();
@@ -272,7 +290,7 @@ exports.connector = function(RFactory, schema, auth_check) {
         else {
           info.data = url.query;
           var next = function() {
-            action(response, match, url.query);
+            action(response, match, url.query, eventEmitter);
           };
           if(auth_check) auth_check(request, response, next, info);
           else next();

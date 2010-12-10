@@ -83,7 +83,7 @@ exports.insert = not_implemented;
  *
  * Arguments:
  *  - RestClass: The RestClass describing the object to insert. 
- *    This should be used onlu to determine where to insert the obj in DB.
+ *    This should be used only to determine where to insert the obj in DB.
  *  - json_obj: what should be saved in DB. Every properties that don't have to
  *    be saved won't appear in this obj.
  *  - callback(obj): to be called after the insert, with json_obj eventually 
