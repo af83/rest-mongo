@@ -1,7 +1,6 @@
 
 require.paths.unshift(__dirname + "/../../vendor/node-mongodb-native/lib")
 
-var debug = require('nodetk/logging').debug;
 var utils = require('nodetk/utils');
 
 var mongo = require("mongodb/db");
@@ -34,8 +33,8 @@ var init_connection_db = function(db) {
     client.collection(name, function(err, collection) {
       if(err == null) callback(collection);
       else {
-        debug("\nError when getting collection:");
-        debug(err.stack);
+        console.error("Error when getting collection:");
+        console.error(err.stack);
         fallback && fallback(err);
       }
     });
@@ -43,8 +42,8 @@ var init_connection_db = function(db) {
   
   db.open(function(err, client_) {
     if (err) {
-      debug('Error while opening connection with DB:')
-      debug(err.stack);
+      console.error('Error while opening connection with DB:')
+      console.error(err.stack);
       return;
     }
     client = client_;

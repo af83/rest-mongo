@@ -18,7 +18,7 @@ var http = require("http"),
 var server;
 var client;
 var backend = mongo_backend.get_backend({db_name: 'test-rest-mongo'});
-    RFactory = rest_mongo.getRFactory(schema, backend);
+var RFactory = rest_mongo.getRFactory(schema, backend);
 
 
 var auth_check = function(req, res, next, info) {
@@ -35,7 +35,9 @@ var auth_check = function(req, res, next, info) {
 
 exports.module_init = function(callback) {
   // init some stuff
-  var connector = rest_server.connector(RFactory, schema, auth_check);
+  var connector = rest_server.connector(RFactory, schema, {
+    auth_check: auth_check
+  });
   var next = function(req, res) {
     res.writeHead(404, {});
     res.end('next() called.');
