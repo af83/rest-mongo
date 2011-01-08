@@ -8,7 +8,7 @@ var http = require("http"),
     rest_server = require('rest-mongo/http_rest/server');
 
 serve_modules_connector = bserver.serve_modules_connector({
-  modules: ['assert', 'util'],
+  modules: ['assert'],
   packages: ['nodetk', 'rest-mongo'],
   additional_files: {
     '/tests.html': __dirname + '/tests.html',

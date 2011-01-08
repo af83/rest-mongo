@@ -5,16 +5,13 @@
     <title>rest-mongo browser functionnal tests</title>
 
     <script type="text/javascript" src="/jquery.js"></script>
-    <script type="text/javascript" src="/init_browser.js"></script>
     <script type="text/javascript" src="/yabble.js"></script>
+    <script type="text/javascript" src="/init_browser.js"></script>    
     <script type="text/javascript">
-      require.reset();
-
       require.useScriptTags();
       require.setModuleRoot('wrapped_js/');
 
       require.ensure([
-        'util',
         'assert',
         'events',
         'tests',
