@@ -86,7 +86,7 @@ harry.save(function() {
 });
 </code></pre>
 
-### Update more than one field in once:
+### Update more than one object in once:
 <pre><code>
 R.Person.update({
   ids: [lilly.id(), harry.id()], 
@@ -97,7 +97,7 @@ R.Person.update({
 </code></pre>
 
 
-### Save more than on field in once:
+### Save more than one object in once:
 <pre><code>
 var p1 = new R.Person({firstname: 'Hermione'});
 var p2 = new R.Person({firstname: 'Ron'});
@@ -107,6 +107,23 @@ R.save([p1, p2], function() {
   console.log('Harry has no friends, because of ', error);
 });
 </code></pre>
+
+
+### Delete more than one object in once:
+<pre><code>
+R.Person.remove({
+  firstname: 'anonymous'
+}, function() {
+  console.log('There is no more anonymous person in DB.');
+});
+
+R.Person.remove({}, function() {
+  console.log('No more person object in DB.');
+}, function(error) {
+  console.error('Could not remove all persons from DB.');
+});
+</code></pre>
+
 
 ## Connect middleware
 

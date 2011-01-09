@@ -124,7 +124,7 @@ var get_backend = exports.get_backend = function(params) {
     update: collection_wrapper(collector, update, 4),
     delete_: collection_wrapper(collector, delete_, 3),
     insert: collection_wrapper(collector, insert, 3),
-    clear_all: collection_wrapper(collector, clear_all, 2),
+    remove: collection_wrapper(collector, remove, 2),
     db: db
   }
 };
@@ -199,8 +199,8 @@ var insert = exports.insert = function(collection, json_obj, callback, fallback)
 };
 
 
-var clear_all = exports.clear_all = function(collection, callback, fallback) {
-  collection.remove({}, function(err, _) {
+var remove = exports.remove = function(collection, query, callback, fallback) {
+  collection.remove(query, function(err, _) {
     if(err != null) return fallback && fallback(err);
     else callback && callback();
   });

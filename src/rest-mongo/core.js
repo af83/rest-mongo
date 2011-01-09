@@ -296,23 +296,27 @@ var clear_cache = function(args) {
    *
    * Arguments:
    *  - args:
+   *    - query: an optional hash to filter what to clear.
+   *      TODO: Do something with it?
+   *
    */
   args.session.cache = {};
   args.session.awaiting_get_callbacks = {};
 };
 
 
-var clear_all = function(args, callback, fallback) {
+var remove = function(args, callback, fallback) {
   /* Delete ALL objects of RestClass from DB.
    *
    * Arguments:
    *  - args:
+   *    - query: optional, filter on what to delete.
    *  - callback(): to be called once the objects have been removed from DB.
    *  - fallback: to be called in case of error.
    */
   clear_cache(args);
   var RestClass = args.RestClass;
-  args.backend.clear_all(RestClass, callback, function(error) {
+  args.backend.remove(RestClass, args.query || {}, callback, function(error) {
     debug("Error while removing objects", RestClass.schema.id, ':', error.message);
     debug(error.stack);
     fallback && fallback(error);
@@ -530,7 +534,7 @@ exports.getRFactory = function(schema, backend) {
         delete_: delete_,
         insert: insert,
         clear_cache: clear_cache,
-        clear_all: clear_all,
+        remove: remove,
       });
 
       RestClass.schema = schema[class_name].schema;

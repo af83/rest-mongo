@@ -74,6 +74,7 @@ exports.delete_ = not_implemented;
  *  - RestClass: RestClass object used to determine where lie the objects we
  *    want to delete.
  *  - ids: list of ids, string or int.
+ *
  */
 
 
@@ -93,9 +94,15 @@ exports.insert = not_implemented;
  */
 
 
-exports.clear_all = not_implemented;
-/* clear_all(RestClass, [callback, [fallback]])
+exports.remove = not_implemented;
+/* remove(RestClass, query, [callback, [fallback]])
  * Delete all the objects of RestClass type in DB backend.
+ *
+ * Arguments:
+ *  - query: filter identifying what to delete.
+ *    Example of queries: {firstname: 'anonymous'}, {}.
+ * - callback: to be called once objects deleted.
+ * - fallback(error): to be called in case of error.
  *
  */
 

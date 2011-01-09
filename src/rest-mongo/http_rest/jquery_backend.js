@@ -83,8 +83,8 @@ var backend = {
     ajax('POST', RestClass.resource, stringify(obj), callback, fallback);
   },
 
-  clear_all: function(RestClass, callback, fallback) {
-    ajax('DELETE', RestClass.resource, {}, callback, fallback);
+  remove: function(RestClass, query, callback, fallback) {
+    ajax('DELETE', RestClass.resource, query, callback, fallback);
   }
 };
 

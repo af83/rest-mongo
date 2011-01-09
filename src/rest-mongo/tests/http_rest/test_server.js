@@ -55,8 +55,8 @@ exports.setup = function(callback) {
     DATA.p2 = new R.Person({firstname: "Kevin"});
     R.save([DATA.p1, DATA.p2], callback);
   });
-  R.Person.clear_all(waiter_clear);
-  R.Animal.clear_all(waiter_clear);
+  R.Person.remove(waiter_clear);
+  R.Animal.remove(waiter_clear);
 };
 
 

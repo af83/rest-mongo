@@ -23,7 +23,7 @@ else {
 var R = rest_mongo.getRFactory(schema, backend)();
 
 exports.setup = function(callback) {
-  R.Person.clear_all(callback);
+  R.Person.remove(callback);
 };
 
 exports.tests = [
@@ -156,6 +156,24 @@ exports.tests = [
       R.Person.get({ids: id}, function(data) {
         assert.equal(data, null);
       });
+    });
+  });
+}],
+
+['Remove with query', 4, function() {
+  // Delete more than one object in once
+  var p1 = new R.Person({firstname: 'to_remove'});
+  var p2 = new R.Person({firstname: 'to_remove'});
+  var p3 = new R.Person({firstname: 'Pierre'});
+  R.save([p1, p2, p3], function() {
+    // Check objects have been saved (have an id):
+    assert.ok(p1.id); assert.ok(p2.id); assert.ok(p3.id);
+    R.Person.remove({query: {firstname: 'to_remove'}}, function() {
+      R.Person.index({}, function(persons) {
+        assert.equal(persons.length, 1);
+      });
+    }, function(error) {
+      assert.ok(false, 'Should not be called.');
     });
   });
 }],

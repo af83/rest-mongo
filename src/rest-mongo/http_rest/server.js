@@ -145,11 +145,11 @@ Server.prototype.POST = function(response, _, data, eventEmitter) {
 
 Server.prototype.DELETE_ = function(response, match, data, eventEmitter) {
   var Collection = this.get_collection();
-  Collection.clear_all(function() {
+  Collection.remove({query: data}, function() {
      response.writeHead(200);
      response.end();
      if(eventEmitter)
-       eventEmitter.emit('DELETE_ALL:' + Collection.schema.id);
+       eventEmitter.emit('REMOVE:' + Collection.schema.id, data);
   }, function(error) {
     response.writeHead(500);
     response.end();
