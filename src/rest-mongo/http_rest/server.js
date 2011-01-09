@@ -288,7 +288,7 @@ exports.connector = function(RFactory, schema, options) {
           });
         }
         else {
-          info.data = url.query;
+          info.data = url.query || {};
           var next = function() {
             action(response, match, url.query, eventEmitter);
           };

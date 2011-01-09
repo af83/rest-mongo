@@ -11,7 +11,7 @@ var schema = require('rest-mongo/tests/schema').schema;
 var backend;
 if(process.browser) {
   var jbackend = require('rest-mongo/http_rest/jquery_backend');
-  backend = jbackend.get_backend();
+  backend = jbackend.get_backend({additional_params: {token: "secret_token"}});
 }
 else {
   // Note: we can not use "XHR + eval" import on browser side

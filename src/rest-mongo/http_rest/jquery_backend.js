@@ -6,6 +6,12 @@ var ajax = function(type, url, query, callback, fallback) {
     // if query is a string, the additional params have already been added.
     query = $.extend({}, query, additional_params);
   }
+  if(type == "DELETE") {
+    // Put additional data in query string params manually (jQuery doesn't do it)
+    var qs = $.param($.extend({}, query, additional_params));
+    if(qs) qs = '?' + qs;
+    url += qs;
+  }
   $.ajax({
     url: url,
     type: type,

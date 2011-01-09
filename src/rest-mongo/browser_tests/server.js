@@ -26,7 +26,21 @@ var backend = mongo_backend.get_backend({db_name: 'test-rest-mongo'});
 
 var schema = require('rest-mongo/tests/schema').schema;
 var RFactory = rest_mongo.getRFactory(schema, backend);
-rest_server_connector = rest_server.connector(RFactory, schema);
+
+var auth_check = function(req, res, next, info) {
+  // We check every request has the token param to test
+  // the jquery backend gives this param for each request.
+  var token = info.data.token;
+  if(token != "secret_token") {
+    res.writeHead(400, {}); res.end();
+  }
+  else {
+    delete info.data.token;    
+    next();
+  }
+};
+
+rest_server_connector = rest_server.connector(RFactory, schema, {auth_check: auth_check});
 
 
 var server = http.createServer(function(req, res) {
