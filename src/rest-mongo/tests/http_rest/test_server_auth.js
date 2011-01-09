@@ -73,11 +73,11 @@ exports.tests = [
 }],
 
 ['AUTH, POST authorized', 1, function() {
-  var request = client.request('DELETE', '/people', {});
+  var request = client.request('POST', '/people', {});
   request.addListener('response', function(response) {
-    assert.equal(response.statusCode, 200);
+    assert.equal(response.statusCode, 201);
   });
-  request.end();
+  request.end('{}');
 }],
 
 ['AUTH, GET 401', 1, function() {
@@ -89,11 +89,11 @@ exports.tests = [
 }],
 
 ['AUTH, POST 403', 1, function() {
-  var request = client.request('DELETE', '/animals', {});
+  var request = client.request('POST', '/animals', {});
   request.addListener('response', function(response) {
     assert.equal(response.statusCode, 403);
   });
-  request.end();
+  request.end('{}');
 }],
 
 ];
