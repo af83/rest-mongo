@@ -7,8 +7,10 @@ var mongo = require("mongodb/db");
 utils.extend(mongo, require('mongodb/connection'));
 var ObjectID = require('mongodb/bson/bson').ObjectID;
 
-
-var init_connection_db = function(db) {
+/**
+ * TODO: add tests about mongodb auth
+ */
+var init_connection_db = function(db, username, password) {
   /* Open connection with DB + Returns obj definig get_collection() fct.
    *
    * The get_collection fct is changed once the connexion is effective, and
@@ -39,6 +41,15 @@ var init_connection_db = function(db) {
       }
     });
   };
+
+  // empty awaiting requests (if any) once db connected
+  var db_ready = function() {
+    delete todo_once_db_opened;
+    collector.get_collection = get_collection_opendb;
+    todo_once_db_opened.forEach(function(args) {
+      get_collection_opendb.apply(this, args);
+    });
+  }
   
   db.open(function(err, client_) {
     if (err) {
@@ -47,11 +58,18 @@ var init_connection_db = function(db) {
       return;
     }
     client = client_;
-    delete todo_once_db_opened;
-    collector.get_collection = get_collection_opendb;
-    todo_once_db_opened.forEach(function(args) {
-      get_collection_opendb.apply(this, args);
-    });
+    if (username && password) {
+      db.authenticate(username, password, function(err, result) {
+        if (err || !result) {
+          console.error('Error while authenticate with DB:')
+          console.error(err.stack);
+          return;
+        }
+        db_ready();
+      });
+    } else {
+      db_ready();
+    }
   });
   return collector;
 };
@@ -105,6 +123,8 @@ var get_backend = exports.get_backend = function(params) {
    *    - db_name: name of the mongo db.
    *    - host: where is the DB, default to 'localhost'.
    *    - port: which port, default to 27017.
+   *    - username: database username
+   *    - password: database password
    *
    */
   params = utils.extend({
@@ -115,7 +135,7 @@ var get_backend = exports.get_backend = function(params) {
   var mongo_server = new mongo.Server(params.host, params.port, 
                                       {auto_reconnect: true}, {});
   var db = new mongo.Db(params.db_name, mongo_server);
-  collector = init_connection_db(db);
+  collector = init_connection_db(db, params.username, params.password);
 
   return {
     index: collection_wrapper(collector, index, 3),

@@ -37,7 +37,9 @@ other documents.
 ### Get a unit of work (we call it 'R'):
 <pre><code>
 var rest_mongo = require("rest-mongo");
-var RFactory = rest_mongo.getRFactory(schema, "db_name");
+var mongo_backend = require('rest-mongo/mongo_backend');
+var backend = mongo_backend.get_backend({db_name: 'db_name', username: "username", password:"password"});
+var RFactory = rest_mongo.getRFactory(schema, backend);
 var R = RFactory();
 </code></pre>
 
