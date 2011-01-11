@@ -15,6 +15,11 @@ exports.schema = {
           friends: {type: "array", items: {"$ref": "Person"}},
           mother: {"$ref": "Person"}
         }
+      },
+      methods: {
+        sayHello: function() {
+          return "Hello, "+ this.firstname;
+        }
       }
     },
 

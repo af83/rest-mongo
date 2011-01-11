@@ -404,7 +404,7 @@ var build_ref_lists = function(schema) {
 // ----------------------
 
 
-var setRestClassProto = function(RestClass, rest_classes) {
+var setRestClassProto = function(RestClass, rest_classes, methods) {
   /* Given a RestClass, set its prototype */
   RestClass.prototype = {
     Class: RestClass,
@@ -456,7 +456,8 @@ var setRestClassProto = function(RestClass, rest_classes) {
                      force_reload: true
                      }, callback, fallback);
     },
-  }
+  };
+  utils.extend(RestClass.prototype, methods);
 };
 
 var save = function(objects, callback, fallback) {
@@ -520,7 +521,7 @@ exports.getRFactory = function(schema, backend) {
       };
       rest_classes[class_name] = RestClass;
 
-      setRestClassProto(RestClass, rest_classes);
+      setRestClassProto(RestClass, rest_classes, schema[class_name].methods);
 
       delegate(RestClass, {
         session: session, 

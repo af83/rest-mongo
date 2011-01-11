@@ -263,8 +263,13 @@ exports.tests = [
   });
 }],
 
-];
 
+['Can add methods to schema', 1, function() {
+  var p1 = new R.Person({firstname: 'Pierre'});
+  assert.equal("Hello, Pierre", p1.sayHello());
+}],
+
+];
 
 if(!process.browser) exports.tests = exports.tests.concat([
   // These tests can not run on browser side (not implemented):
@@ -302,7 +307,7 @@ if(!process.browser) exports.tests = exports.tests.concat([
   }, function(err) {
     assert.ok(err);
   });
-}],
+}]
 
 ]);
 
