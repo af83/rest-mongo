@@ -37,6 +37,12 @@ exports.tests = [
   });
 }],
 
+['An object can see its R', 1, function() {
+  // 
+  var p = new R.Person();
+  assert.equal(p.R, R);
+}],
+
 ['Create obj', 2, function() {
   // Create an object, check it has an id
   // Try to fetch it back, ensure it's the same

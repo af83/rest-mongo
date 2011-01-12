@@ -501,6 +501,7 @@ exports.getRFactory = function(schema, backend) {
 
   build_ref_lists(schema);
   return function() {
+    var R = {}; // The R object we are going to return
     var rest_classes = {};
 
     for(var prop_name in schema) (function(class_name) {
@@ -522,6 +523,7 @@ exports.getRFactory = function(schema, backend) {
       rest_classes[class_name] = RestClass;
 
       setRestClassProto(RestClass, rest_classes, schema[class_name].methods);
+      RestClass.prototype.R = R; // So that objects can identify their R.
 
       delegate(RestClass, {
         session: session, 
@@ -548,7 +550,7 @@ exports.getRFactory = function(schema, backend) {
       };
     })(prop_name);
 
-    return utils.extend({
+    return utils.extend(R, {
       clear_caches: function() {
         debug("Clear the caches");
         utils.each(rest_classes, function(name, RestClass){
