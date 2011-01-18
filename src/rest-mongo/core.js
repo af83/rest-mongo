@@ -4,7 +4,7 @@
 
  */
 
-require.paths.unshift(__dirname + "/../../vendor/nodetk/src");
+require.paths.push(__dirname + "/../../vendor/nodetk/src");
 
 var callbacks = require('nodetk/orchestration/callbacks');
 var debug = require('nodetk/logging').debug;
