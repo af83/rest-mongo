@@ -26,6 +26,11 @@ var schema = {
         friends: {type: "array", items: {"$ref": "Person"}},
         mother: {"$ref": "Person"}
       }
+    },
+    methods: {
+      sayHello: function() {
+        console.log("Hello, "+ this.firstname);
+      }
     }
   }
 };
@@ -33,6 +38,9 @@ var schema = {
 
 The schema describes a document. It can have references or list of references to
 other documents.
+You can also associate methods to objects in the schema.
+ Here, we will have the **sayHello** method available on Person objects.
+
 
 ### Get a unit of work (we call it 'R'):
 <pre><code>
@@ -45,9 +53,41 @@ var R = RFactory();
 
 Get a new R every time you need to get a new context to work in (at every client request for example).
 
+
+### Additional schema
+When creating a RFactory, you can specify an additional schema 
+that will extend the base one. This is done so you can have properties 
+or methods specific to server/browser side.
+
+<pre><code>
+var server_schema = {
+  "Person": {
+    schema: {
+      properties: {
+        secret: {type: "string"}
+      }
+    },
+    methods: {
+      get_same_secrets: function(callback, fallback) {
+        // Returns Persons with the same secret as me.
+        this.R.Person.index({query: {secret: this.secret}},
+                            callback, fallback);
+      }
+    }
+  }
+}
+
+var RFactory = rest_mongo.getRFactory(schema, backend, {
+  additional_schema: server_schema
+});
+
+</code></pre>
+
+
 ### Create and save an object into the DB
 <pre><code>
 var lilly = new R.Person({firstname: "Lilly"});
+lilly.sayHello();
 lilly.save(function() {
   sys.puts("Lilly saved in DB with id " + lilly.id());
 });

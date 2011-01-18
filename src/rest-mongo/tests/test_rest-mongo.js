@@ -7,7 +7,8 @@ var debug = require('nodetk/logging').debug;
 var utils = require('nodetk/utils');
 
 
-var schema = require('rest-mongo/tests/schema').schema;
+var schema = require('./schema').schema;
+var server_schema;
 var backend;
 if(process.browser) {
   var jbackend = require('rest-mongo/http_rest/jquery_backend');
@@ -18,9 +19,12 @@ else {
   // because of this conditionnal import
   var mongo_backend = require('rest-mongo/mongo_backend');
   backend = mongo_backend.get_backend({db_name: 'test-rest-mongo'});
+  server_schema = require('./server_schema').schema
 }
 
-var R = rest_mongo.getRFactory(schema, backend)();
+var R = rest_mongo.getRFactory(schema, backend, {
+  additional_schema: server_schema
+})();
 
 exports.setup = function(callback) {
   R.Person.remove(callback);
@@ -275,7 +279,37 @@ exports.tests = [
   assert.equal("Hello, Pierre", p1.sayHello());
 }],
 
+['Server property and method', 3, function() {
+  var unexpected_error =  function() {assert.ok(false, "should not be called")};
+  var p1 = new R.Person({firstname: 'Pierre', secret: 'somesecret'});
+  var p2 = new R.Person({firstname: 'Ori', secret: 'somesecret'});
+  R.save([p1, p2], function() {
+    var pid1 = p1.id;
+    var pid2 = p2.id;
+    assert.equal(p1.secret, 'somesecret'); // always have it since we just set it
+    R.Person.clear_cache();
+    R.Person.get({ids: pid1}, function(p) {
+      // if on browser, shouldn't be able to see the secret property:
+      // (dropped when registered)
+      if(process.browser) {
+        assert.equal(p.secret, undefined);
+        assert.equal(p.get_same_secret, undefined);
+      }
+      else {
+        assert.equal(p.secret, 'somesecret');
+        p.get_same_secrets(function(result) {
+          result = result.map(function(p){return p.json()});
+          assert.deepEqual(result, [p2.json(), p1.json()]);
+        }, unexpected_error);
+      }
+    }, unexpected_error);
+  }, unexpected_error)
+}],
+
 ];
+
+
+
 
 if(!process.browser) exports.tests = exports.tests.concat([
   // These tests can not run on browser side (not implemented):

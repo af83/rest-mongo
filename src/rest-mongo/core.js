@@ -478,7 +478,7 @@ var save = function(objects, callback, fallback) {
 };
 
 
-exports.getRFactory = function(schema, backend) {
+exports.getRFactory = function(schema, backend, options) {
   /* Returns a R factory.
    * This factory return a R object at every call. Each R as its own "session",
    * meaning that two subsequent calls of R.Toto.get(2) will return the same object.
@@ -494,10 +494,17 @@ exports.getRFactory = function(schema, backend) {
    *  - schema: schema describing the nature of your data.
    *  - backend: backend to use for storage. See backend_interface.js to know
    *    what methods a backend should define.
+   *  - options: hash, optional, possibly containing:
+   *    - additional_schema: schema to extend the base schema.
    *
    */
   if (!schema) throw('You must specify a schema');
   if (!backend) throw('You must give a backend');
+  options = options || {};
+  var add_schema = options.additional_schema;
+  if(add_schema) {
+    schema = utils.deep_extend({}, schema, add_schema);
+  }
 
   build_ref_lists(schema);
   return function() {
