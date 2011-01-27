@@ -254,6 +254,7 @@ var delete_ = function(args, callback, fallback) {
   var awaiting_get_callbacks = args.session.awaiting_get_callbacks;
 
   if(!utils.isArray(ids)) ids = [ids];
+  if(ids.length < 1) return callback(); 
   debug("Delete object of rest class", RestClass.schema.id, "having id", ids);
   args.backend.delete_(RestClass, ids, function() {
     ids.map(function(id) {delete cache[id]});

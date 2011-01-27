@@ -170,6 +170,19 @@ exports.tests = [
   });
 }],
 
+['Delete on collection with empty list', 1, function() {
+  var _delete_ = backend.delete_;
+  backend.delete_ = function() {
+    assert.ok(false, "Should not be called");
+  };
+  R.Person.delete_({ids: []}, function() {
+    assert.ok(true, 'Must be called.');
+    backend.delete_ = _delete_;
+  }, function(err) {
+    assert.ok(false, "Should not be called:" + err);
+  });
+}],
+
 ['Remove with query', 4, function() {
   // Delete more than one object in once
   var p1 = new R.Person({firstname: 'to_remove'});
