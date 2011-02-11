@@ -1,0 +1,11 @@
+{ "name" : "rest-mongo"
+, "description" : "A JS ORM for both server and browser providing Rest server connect middleware."
+, "version": "0.1.2"
+, "repository" :
+  { "type" : "git"
+  , "url" : "http://github.com/AF83/rest-mongo.git"
+  }
+, "dependencies": {
+  "nodetk": ""
+}
+}

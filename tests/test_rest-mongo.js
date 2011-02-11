@@ -1,5 +1,3 @@
-require.paths.unshift(__dirname + '/../../');
-
 var rest_mongo = require("rest-mongo/core");
 
 var assert = require("nodetk/testing/custom_assert");
